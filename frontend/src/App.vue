@@ -1,9 +1,8 @@
 <template>
   <div id="app">
     <div class="container">
-      <h1>Person BMI Web App</h1>
 
-  <nav class="main-nav">
+  <!-- <nav class="main-nav">
     <router-link to="/">Home</router-link> |
     <router-link to="/testCallApi">Test Call API</router-link> |
     <router-link to="/addperson">Add Person</router-link> |
@@ -11,10 +10,8 @@
     <router-link to="/viewone">View One</router-link> |
     <router-link to="/updateprofile">Edit</router-link> |
     <router-link to="/delete">Delete</router-link>
-    <!-- <a href="/addperson">Add Person</a> | <a href="/viewall">View All</a> |
-    <a href="/viewone">View One</a> | <a href="/updateprofile">Edit</a> |
-    <a href="/delete">Delete</a> -->
-  </nav>
+
+  </nav> -->
   <router-view 
   :personList="personList" 
   :persons="personList"
@@ -24,12 +21,13 @@
   @delete-person="deletePerson"
   >
 </router-view>
+  <!-- <LoginPage> </LoginPage> -->
   <!-- <add-person @save-person="savePerson"></add-person>
   <list-person :personList="personList"></list-person>
   <one-person :personList="personList"></one-person>
   <edit-person :personList="personList" @edit-person="editPerson"></edit-person>
   <delete-person :personList="personList" @delete-person="deletePerson"></delete-person>-->
-  <bmi-stats :personList="personList"></bmi-stats>
+  <!-- <bmi-stats :personList="personList"></bmi-stats> -->
   <h3>Footer</h3>
   </div>
   </div>
@@ -37,7 +35,8 @@
 
 
 <script>
-import BmiStats from './components/BmiStats.vue';
+// import BmiStats from './components/BmiStats.vue';
+// import LoginPage from './components/LoginPage.vue';
 // import StateGraph from './components/StateGraph.vue';
 // import AddPerson from "./components/AddPerson.vue";
 // import DeletePerson from "./components/DeletePerson.vue";
@@ -51,7 +50,8 @@ export default {
   name: "App",
   components: {
     // StateGraph,
-    BmiStats
+    // BmiStats,
+    // LoginPage
     // // HelloWorld,
     // EditPerson,
     // AddPerson,
@@ -74,46 +74,35 @@ export default {
       // bmiList: []
     };
   },
+  created() {
+    this.checkSession(); // ✅ Run session check when app is created
+  },
   methods: {
-    viewPerson(p) {
-      this.personList.push(p);
-      console.log(this.personList);
-    },
-    // savePerson(p) {
-    //   this.personList.push(p);
-    //   console.log(this.personList);
-    // },
-    addPerson(p) {
-      console.log("Add Person"+p);
-      this.personList.push(p);
-      console.log(this.personList);
-    },
-    editPerson(updatedPerson, index) {
-      console.log("this is index"+index);
-      console.log("Edit Person", updatedPerson);
-      if (index >= 0 && index < this.personList.length) {
-        this.personList[index] = { ...updatedPerson };
-        console.log("Person updated at index", index, this.personList[index]);
-        alert("Update successful");
-      } else {
-        console.warn("Invalid index for editing");
-        alert("failed to update");
+    checkSession() {
+    // Check if session exists
+    const userString = localStorage.getItem("user")
+    const user = JSON.parse(userString); // Convert string to object
+    console.log("User session object:", user);
+    // console.log("User session:", user.role);
+    if (!userString) {
+        this.$router.push("/");
+      }else{
+        if (user.role == 1){
+        this.$router.push("/lecturerDashboard");
+      }else if (user.role == 2){
+        this.$router.push("/dashboard");
+      }else if (user.role == 3){
+        this.$router.push("/academicAdvisorDashboard");
+      }else{
+        this.$router.push("/");
       }
-    },
-    deletePerson(index) {
-      if (index >= 0 && index < this.personList.length) {
-        this.personList.splice(index, 1);
-        console.log("Person deleted at index", index);
-        console.log("Updated personList:", this.personList);
-      } else {
-        console.warn("Invalid index for deletion");
-        alert("Failed to delete person");
       }
+
     }
   },
 };
 </script>
-<style>
+<!-- <style>
 body {
   font-family: "Segoe UI", sans-serif;
   background-color: #f4f7f9;
@@ -237,5 +226,5 @@ nav a:hover {
 .chart-canvas {
   margin-top: 20px;
 }
-</style>
+</style> -->
 
