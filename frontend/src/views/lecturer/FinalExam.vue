@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>Lecturer Dashboard</h2>
+    <h2>Final Exam</h2>
     <p>Welcome back, {{ userName }}!</p>
     <button @click="logoutUser">Logout</button>
   </div>
@@ -8,7 +8,7 @@
 
 <script>
 export default {
-  name: "lecturerDashboard",
+  name: "FinalExam",
   data() {
     return {
       userName: ''
