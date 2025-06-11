@@ -7,7 +7,6 @@
         <router-link to="/lecturerMenu/dashboard" exact-active-class="active-link">Dashboard</router-link>
         <router-link to="/lecturerMenu/students" exact-active-class="active-link">Student Records</router-link>
         <router-link to="/lecturerMenu/assessment" exact-active-class="active-link">Assessment</router-link>
-        <router-link to="/lecturerMenu/final-exam" exact-active-class="active-link">Final Exam</router-link>
         <router-link to="/lecturerMenu/total-calculation" exact-active-class="active-link">Total Calculation</router-link>
       </nav>
       <button class="logout-btn" @click="logoutUser">Log Out</button>
@@ -93,7 +92,6 @@ export default {
 /* Main Content */
 .content-area {
   flex: 1;
-  padding: 30px;
   background-color: #fff8f1;
   overflow-y: auto;
 }

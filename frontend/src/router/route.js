@@ -11,7 +11,6 @@ import LoginPage from "@/views/LoginPage.vue";
 import LecturerMenu from "@/views/lecturer/LecturerMenu.vue";
 import StudentRecords from "@/views/lecturer/StudentRecords.vue";
 import LecturerAssessment from "@/views/lecturer/LecturerAssessment.vue";
-import FinalExam from "@/views/lecturer/FinalExam.vue";
 import TotalCalculation from "@/views/lecturer/TotalCalculation.vue";
 import LecturerDashboard from "@/views/lecturer/LecturerDashboard.vue";
 
@@ -44,7 +43,6 @@ const router = createRouter({
                 { path: "dashboard", component: LecturerDashboard },
                 { path: "students", component: StudentRecords },
                 { path: "assessment", component: LecturerAssessment },
-                { path: "final-exam", component: FinalExam },
                 { path: "total-calculation", component: TotalCalculation },
             ],
         },
