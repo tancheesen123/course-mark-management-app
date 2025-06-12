@@ -13,7 +13,7 @@
         v-for="assessment in assessments"
         :key="assessment.id"
         class="assessment-card"
-        @click="goToAssessment(assessment)"
+        @click="goToAssessment(assessment.id)"
       >
         <img :src="getIcon(assessment.type)" class="type-icon" alt="icon" />
         <p>{{ assessment.name }}</p>
@@ -59,10 +59,9 @@ export default {
     }
   },
   methods: {
-    goToAssessment(assessment) {
-     const assessmentName = encodeURIComponent(assessment.name);
+    goToAssessment(assessmentId) {
       // Here you can route to a detailed page where the lecturer can enter marks for the selected assessment
-      this.$router.push(`/lecturerMenu/student-record/assessment/mark?course_id=${this.courseId}&name=${assessmentName}`);
+      this.$router.push(`/assessment-details/${assessmentId}`);
     },
     getIcon(type) {
       return require(`@/assets/icons/${type}-icon.png`);

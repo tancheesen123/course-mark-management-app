@@ -22,8 +22,6 @@ import ReportList from "@/views/advisor/ReportList.vue";
 
 import StudentMenu from "@/views/student/StudentMenu.vue";
 import StudentDashboard from "@/views/student/StudentDashboard.vue";
-import StudentRecordsMark from "@/views/lecturer/StudentRecordsMark.vue";
-import AddStudentRecord from "@/views/lecturer/AddStudentRecord.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -48,13 +46,6 @@ const router = createRouter({
                 { path: "dashboard", component: LecturerDashboard },
                 { path: "student-record", component: StudentRecords },
                 { path: "student-record/assessment", component: StudentRecordAssessment, props: route => ({ courseId: route.query.course_id})},
-                { path: "student-record/assessment/mark", component: StudentRecordsMark, props: route => ({ courseId: route.query.course_id})},
-                {
-                    path: "student-record/assessment/add",
-                    name: "AddStudentRecord", 
-                    component: AddStudentRecord,
-                    props: (route) => ({ course_id: route.query.course_id, name: route.query.name })
-                },
                 { path: "assessment", component: LecturerAssessment },
                 { path: "total-calculation", component: TotalCalculation },
             ],
