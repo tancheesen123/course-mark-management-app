@@ -5,7 +5,8 @@
       <img src="@/assets/Logo-UTM-white.png" alt="UTM Logo" class="logo" />
       <nav class="nav-links">
         <router-link to="/advisorMenu/dashboard" exact-active-class="active-link">Dashboard</router-link>
-        <router-link to="/advisorMenu/addPerson" exact-active-class="active-link">Add Person</router-link>
+        <router-link to="/advisorMenu/advisees" exact-active-class="active-link">Advisees</router-link>
+        <router-link to="/advisorMenu/reports" exact-active-class="active-link">Reports</router-link>
       </nav>
       <button class="logout-btn" @click="logoutUser">Log Out</button>
     </aside>

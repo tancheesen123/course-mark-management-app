@@ -11,12 +11,13 @@ import LoginPage from "@/views/LoginPage.vue";
 import LecturerMenu from "@/views/lecturer/LecturerMenu.vue";
 import StudentRecords from "@/views/lecturer/StudentRecords.vue";
 import LecturerAssessment from "@/views/lecturer/LecturerAssessment.vue";
-import FinalExam from "@/views/lecturer/FinalExam.vue";
 import TotalCalculation from "@/views/lecturer/TotalCalculation.vue";
 import LecturerDashboard from "@/views/lecturer/LecturerDashboard.vue";
 
 import AcademicAdvisorMenu from "@/views/advisor/AcademicAdvisorMenu.vue";
 import AcademicAdvisorDashboard from "@/views/advisor/AcademicAdvisorDashboard.vue";
+import AdviseeList from "@/views/advisor/AdviseeList.vue";
+import ReportList from "@/views/advisor/ReportList.vue";
 
 import StudentMenu from "@/views/student/StudentMenu.vue";
 import StudentDashboard from "@/views/student/StudentDashboard.vue";
@@ -44,7 +45,6 @@ const router = createRouter({
                 { path: "dashboard", component: LecturerDashboard },
                 { path: "students", component: StudentRecords },
                 { path: "assessment", component: LecturerAssessment },
-                { path: "final-exam", component: FinalExam },
                 { path: "total-calculation", component: TotalCalculation },
             ],
         },
@@ -54,7 +54,8 @@ const router = createRouter({
             children: [
                 // { path: "", redirect: "/academicAdvisorDashboard/dashboard" },
                 { path: "dashboard", component: AcademicAdvisorDashboard },
-                { path: "addperson", component: Addperson },
+                { path: 'advisees', component: AdviseeList },  
+                { path: 'reports', component: ReportList },   
             ],
         },
         {

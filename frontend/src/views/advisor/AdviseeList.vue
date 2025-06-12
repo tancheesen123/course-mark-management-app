@@ -1,0 +1,175 @@
+<template>
+  <div class="advisee-list-page">
+    <!-- Main Content -->
+    <main class="content-area">
+      <div class="title-cover">
+        <h1>Advisee List</h1>
+        <div class="search-filter">
+          <div class="search-bar">
+            <input type="text" v-model="searchQuery" placeholder="Search Advisees" />
+          </div>
+          <div class="semester-filter">
+            <select v-model="selectedSemester">
+              <option v-for="semester in semesters" :key="semester" :value="semester">{{ semester }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advisee Table -->
+      <table class="advisee-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Matric Number</th>
+            <th>GPA</th>
+            <th>Risk Indicator</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="advisee in filteredAdvisees" :key="advisee.matric_number">
+            <td>{{ advisee.student_name }}</td>
+            <td>{{ advisee.matric_number }}</td>
+            <td>{{ advisee.gpa }}</td>
+            <td :class="getRiskClass(advisee.risk)">{{ advisee.risk }}</td>
+            <td><button class="view-btn" @click="viewAdvisee(advisee)">View</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'AdviseeList',
+  data() {
+    return {
+      searchQuery: '',
+      selectedSemester: '20242025/1',
+      semesters: ['20242025/1', '20232024/2', '20222023/1', '20222023/2'],
+      advisees: [], 
+    };
+  },
+  computed: {
+    filteredAdvisees() {
+      return this.advisees
+        .filter(advisee => advisee.student_name.toLowerCase().includes(this.searchQuery.toLowerCase()))
+        .filter(advisee => advisee.semester === this.selectedSemester);  
+    }
+  },
+  methods: {
+    fetchAdvisees() {
+      const advisorId = 3;
+      fetch(`http://localhost:8085/api/advisees/${advisorId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log(data); 
+          this.advisees = data; 
+        })
+        .catch(error => {
+          console.error("There was an error fetching advisees!", error); 
+        });
+    },
+    getRiskClass(risk) {
+      if (risk === 'LOW') return 'low-risk';
+      if (risk === 'MEDIUM') return 'medium-risk';
+      return 'high-risk';
+    },
+
+    viewAdvisee(advisee) {
+      this.$router.push(`/advisorMenu/advisees/${advisee.matric_number}`); 
+    }
+  },
+  mounted() {
+    this.fetchAdvisees(); 
+  }
+};
+</script>
+
+<style scoped>
+.advisee-list-page {
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+}
+
+.content-area {
+  flex: 1;
+  padding: 30px;
+  background-color: #fff8f1;
+  width: 100%;
+}
+
+.title-cover h1 {
+  font-size: 48px;
+  color: #770f20;
+}
+
+.search-filter {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.search-bar input {
+  width: 300px;
+  padding: 10px;
+  border-radius: 15px;
+  border: 1px solid #ccc;
+}
+
+.semester-filter select {
+  padding: 10px;
+  border-radius: 15px;
+  border: 1px solid #ccc;
+}
+
+.advisee-table {
+  width: 100%;
+  margin-top: 30px;
+  border-collapse: collapse;
+}
+
+.advisee-table th,
+.advisee-table td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+.advisee-table th {
+  background-color: #f5efe9;
+}
+
+.low-risk {
+  color: green;
+}
+
+.medium-risk {
+  color: orange;
+}
+
+.high-risk {
+  color: red;
+}
+
+.view-btn {
+  padding: 10px 20px;
+  background-color: #7c192f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.view-btn:hover {
+  background-color: #ffbf48;
+}
+</style>
