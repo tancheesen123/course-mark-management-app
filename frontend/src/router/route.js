@@ -10,6 +10,7 @@ import LoginPage from "@/views/LoginPage.vue";
 
 import LecturerMenu from "@/views/lecturer/LecturerMenu.vue";
 import StudentRecords from "@/views/lecturer/StudentRecords.vue";
+import StudentRecordAssessment from "@/views/lecturer/StudentRecordAssessment.vue";
 import LecturerAssessment from "@/views/lecturer/LecturerAssessment.vue";
 import TotalCalculation from "@/views/lecturer/TotalCalculation.vue";
 import LecturerDashboard from "@/views/lecturer/LecturerDashboard.vue";
@@ -43,7 +44,8 @@ const router = createRouter({
             children: [
                 // { path: '', redirect: '/lecturerDashboard' },
                 { path: "dashboard", component: LecturerDashboard },
-                { path: "students", component: StudentRecords },
+                { path: "student-record", component: StudentRecords },
+                { path: "student-record/assessment", component: StudentRecordAssessment, props: route => ({ courseId: route.query.course_id})},
                 { path: "assessment", component: LecturerAssessment },
                 { path: "total-calculation", component: TotalCalculation },
             ],

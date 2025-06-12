@@ -59,7 +59,7 @@ export default {
   },
   methods: {
     goToCourse(courseId) {
-      this.$router.push(`/student-records/${courseId}`);
+       this.$router.push({ path: '/lecturerMenu/student-record/assessment', query: { course_id: courseId } });
     },
   },
 };

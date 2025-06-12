@@ -137,12 +137,55 @@ $app->post('/api/assessments', function($request, $response){
 });
 
 $app->put('/api/assessments/{id}', function($request, $response, $args){
-    $data = json_encode($request->getBody()->getContents(), true);
+    $data = json_decode($request->getBody()->getContents(), true);
     $pdo = getPDO();
     $stmt = $pdo->prepare("UPDATE assessment_component SET name = ?, weight = ?, type = ? WHERE id = ?");
     $stmt->execute([$data['name'], $data['weight'], $data['type'], $args['id']]);
     $response->getBody()->write(json_encode(['message' => 'Assessment successful updated']));
     return $response->withHeader('content-type', 'application/json')->withStatus(201);
 });
+
+$app->patch('/api/assessments/{id}', function ($request, $response, $args) {
+    $data = json_decode($request->getBody()->getContents(), true);
+
+    $pdo = getPDO();
+    $stmt = $pdo->prepare("UPDATE assessment_component SET name = ?, weight = ?, type = ? WHERE id = ?");
+    $stmt->execute([$data['name'], $data['weight'], $data['type'], $args['id']]);
+
+    $response->getBody()->write(json_encode(['message' => 'Assessment successfully updated']));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+});
+
+$app->post('/api/student-assessments', function($request, $response) {
+    $data = json_decode($request->getBody()->getContents(), true);
+
+    if (empty($data['student_id']) || empty($data['assessment_id']) || empty($data['mark'])) {
+        $response->getBody()->write(json_encode(['error' => 'Missing required fields']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    $pdo = getPDO();
+    $stmt = $pdo->prepare("INSERT INTO student_assessments (student_id, assessment_id, mark) VALUES (?, ?, ?)");
+    $stmt->execute([$data['student_id'], $data['assessment_id'], $data['mark']]);
+
+    $response->getBody()->write(json_encode(['message' => 'Marks added successfully']));
+    return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+});
+
+$app->delete('/api/assessments/{id}', function($request, $response, $args) {
+    $assessmentId = $args['id'];
+    
+    $pdo = getPDO();
+    $stmt = $pdo->prepare("DELETE FROM assessment_component WHERE id = ?");
+    $stmt->execute([$assessmentId]);
+
+    $response->getBody()->write(json_encode(['message' => 'Assessment deleted successfully']));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+});
+
+
+
+
+
 
 $app ->run();

@@ -5,7 +5,7 @@
       <img src="@/assets/Logo-UTM-white.png" alt="UTM Logo" class="logo" />
       <nav class="nav-links">
         <router-link to="/lecturerMenu/dashboard" exact-active-class="active-link">Dashboard</router-link>
-        <router-link to="/lecturerMenu/students" exact-active-class="active-link">Student Records</router-link>
+        <router-link to="/lecturerMenu/student-record" :class="{ 'active-link': isStudentRecordActive }">Student Records</router-link>
         <router-link to="/lecturerMenu/assessment" exact-active-class="active-link">Assessment</router-link>
         <router-link to="/lecturerMenu/total-calculation" exact-active-class="active-link">Total Calculation</router-link>
       </nav>
@@ -22,6 +22,11 @@
 <script>
 export default {
   name: 'LecturerDashboard',
+  computed: {
+    isStudentRecordActive() {
+      return this.$route.path.includes('student-record');
+    }
+  },
   methods: {
     logoutUser() {
       localStorage.removeItem('authToken');
