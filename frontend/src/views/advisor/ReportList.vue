@@ -49,34 +49,60 @@ export default {
       searchQuery: '',
       selectedSemester: '20242025/1',
       semesters: ['20242025/1', '20232024/2', '20222023/1', '20222023/2'],
-      advisees: [], 
+      advisees: [],  
     };
   },
   computed: {
     filteredAdvisees() {
-      return this.advisees
-        .filter(advisee => advisee.student_name.toLowerCase().includes(this.searchQuery.toLowerCase()))
-        .filter(advisee => advisee.semester === this.selectedSemester);  
+      if (Array.isArray(this.advisees)) {
+        return this.advisees
+          .filter(advisee => advisee.student_name.toLowerCase().includes(this.searchQuery.toLowerCase()))
+          .filter(advisee => advisee.semester === this.selectedSemester);
+      }
+      return [];
     }
   },
   methods: {
+    // Fetch the advisees based on advisor's ID from localStorage
     fetchAdvisees() {
-      const advisorId = 3;
+      const advisorId = this.getAdvisorId();
+      if (!advisorId) {
+        console.error('No advisor ID found!');
+        return;
+      }
+
       fetch(`http://localhost:8085/api/advisees/${advisorId}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-          console.log(data); 
-          this.advisees = data; 
+          console.log(data);
+          if (Array.isArray(data.students)) {
+            this.advisees = data.students;
+          } else {
+            console.error("Invalid data format:", data);
+          }
         })
         .catch(error => {
-          console.error("There was an error fetching advisees!", error); 
+          console.error("There was an error fetching advisees!", error);
         });
     },
+
+    getAdvisorId() {
+      const userString = localStorage.getItem("user");
+      if (userString) {
+        try {
+          const user = JSON.parse(userString);
+          if (user.role === 3) { 
+            return user.id; 
+          } else {
+            console.warn("Current user is not an advisor.");
+          }
+        } catch (error) {
+          console.warn("Invalid user JSON:", userString);
+        }
+      }
+      return null;
+    },
+
     getRiskClass(risk) {
       if (risk === 'LOW') return 'low-risk';
       if (risk === 'MEDIUM') return 'medium-risk';
@@ -84,7 +110,7 @@ export default {
     },
 
     viewAdvisee(advisee) {
-      this.$router.push(`/advisorMenu/advisees/${advisee.matric_number}`); 
+      this.$router.push(`/advisorMenu/advisees/${advisee.matric_number}`);
     }
   },
   mounted() {

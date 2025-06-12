@@ -59,9 +59,10 @@ class UserController
             'token' => $jwt,
             'user' => [
                 'id' => $user['user_id'],
-                'email' => $user['email'],
-                'name' => $user['username'] ?? null, // optional
-                'role' => $user['role'] ?? null // optional
+            'email' => $user['email'],
+            'name' => $user['username'] ?? null, // optional
+            'role' => $user['role'] ?? null, // optional
+            'advisor_id' => $user['user_id'] // Add advisor_id here, assuming advisor_id is user_id 
             ]
         ]));
         return $response->withHeader('Content-Type', 'application/json');
