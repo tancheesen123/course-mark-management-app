@@ -23,6 +23,33 @@ class StudentController
         return $response->withHeader('Content-Type', 'application/json');
     }
 
+    public function findById(Request $request, Response $response, $args)
+    {
+        $data = $request->getParsedBody();
+        $id = $data['id'] ?? null;
+
+
+        $students = $this->studentService->getStudentById( $id);
+
+        $response->getBody()->write(json_encode($students));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function findEnrollmentById(Request $request, Response $response, $args)
+    {
+        $data = $request->getParsedBody();
+        $id = $data['id'] ?? null;
+
+        $students = $this->studentService->getStudentById( $id);
+        error_log("Student ID: " . $students["id"]); // Log the student ID for debugging
+
+        $studentsEnrollment = $this->studentService->getEnrollmentById($students["id"]);
+
+
+        $response->getBody()->write(json_encode($studentsEnrollment));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
     // public function show(Request $request, Response $response, $args)
     // {
     //     $id = $args['id'] ?? null;

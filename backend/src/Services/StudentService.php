@@ -14,11 +14,20 @@ class StudentService
 
     public function getAllStudents()
     {
-        // you can add any business logic here if needed
-        // echo "In Service...";
+
         return $this->studentRepository->getAll();
     }
 
+    public function getStudentById($id)
+    {
+
+        return $this->studentRepository->getById($id);
+    }
+
+    public function getEnrollmentById($id)
+    {
+        return $this->studentRepository->getEnrollmentById($id);
+    }
     // public function getStudentById($id)
     // {
     //     // validation, filtering or other business logic

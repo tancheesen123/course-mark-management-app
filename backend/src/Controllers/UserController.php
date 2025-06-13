@@ -58,7 +58,7 @@ class UserController
         $response->getBody()->write(json_encode([
             'token' => $jwt,
             'user' => [
-                'id' => $user['user_id'],
+            'id' => $user['user_id'],
             'email' => $user['email'],
             'name' => $user['username'] ?? null, // optional
             'role' => $user['role'] ?? null, // optional

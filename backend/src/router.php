@@ -19,6 +19,8 @@ return function (App $app) {
     $app->group('/api', function ($group) {
         $group->get('/users', [UserController::class, 'index']);
         $group->get('/students', [StudentController::class, 'index']); // if you meant StudentController
+        $group->get('/studentsById', [StudentController::class, 'findById']);
+        $group->get('/getStudentEnrollmentById', [StudentController::class, 'findEnrollmentById']);
         $group->get('/courses', [CourseController::class, 'getCoursesByLecturer']);
         // OR: $group->get('/students', [UserController::class, 'index']); if intentional
     })->add(new JwtMiddleware());
