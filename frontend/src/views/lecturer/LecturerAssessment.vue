@@ -99,7 +99,7 @@ export default {
     return {
       showForm: false,
       courses: [],
-      assessments: [],
+      assessments: [], // This might be redundant if you're using courseAssessments
       courseAssessments: {},
       showConfirmation: false,
       selectedAssessment: null,
@@ -112,16 +112,44 @@ export default {
       },
     };
   },
-  mounted() {
-    fetch('http://localhost:8085/api/getAllCourses')
-      .then(res => res.json())
-      .then(data => {
-        this.courses = data.courses || [];
+  async mounted() { // Changed to async to use await for cleaner token retrieval
+    // 1. Retrieve the token once when the component mounts
+    const token = localStorage.getItem('authToken');
+    console.log('Token from localStorage:', token);
+    if (!token) {
+      console.error("Authentication token not found. User is not logged in.");
+      // You might want to redirect to login page here or show an error message
+      // this.$router.push('/login');
+      return; // Stop execution if no token
+    }
 
-        this.courses.forEach(course => {
-          this.fetchAssessmentsForCourse(course.course_id);
-        });
+    try {
+      // 2. Add Authorization header to getAllCourses fetch
+      const response = await fetch('http://localhost:8085/api/getAllCourses', {
+        method: 'GET', // Or specify 'GET' explicitly
+        headers: {
+          'Content-Type': 'application/json', // Keep if your API expects it, though GET usually doesn't need body type
+          'Authorization': `Bearer ${token}`, // <-- ADDED HERE
+        },
       });
+
+      if (!response.ok) {
+        // Handle non-2xx responses (e.g., 401, 403, 500)
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch courses: ${response.status} - ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      this.courses = data.courses || [];
+
+      // Fetch assessments for each course (these calls will also need the token)
+      this.courses.forEach(course => {
+        this.fetchAssessmentsForCourse(course.course_id, token); // Pass the token
+      });
+    } catch (error) {
+      console.error("Error loading courses:", error);
+      // Display error to user if necessary
+    }
   },
   methods: {
     toggleForm() {
@@ -133,7 +161,13 @@ export default {
     resetForm() {
       this.form = { id: null, course_id: null, name: '', type: '', weight: null };
     },
-    saveAssessment() {
+    async saveAssessment() { // Changed to async
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error("Authentication token not found.");
+        return;
+      }
+
       console.log(this.form); // debugging: check the form data before sending
       if (!this.form.course_id || !this.form.name || !this.form.type || this.form.weight === null) {
         alert("Please fill in all fields");
@@ -146,37 +180,45 @@ export default {
         weight: this.form.weight,
       };
 
-      // send the assessment data to the backend via API
-      fetch('http://localhost:8085/api/assessments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(assessmentData),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log('API Response: ', data);
-          if (data.message) {
-            // Successfully added
-            this.assessments.push({
-              ...assessmentData,
-              id: Date.now(),
-            });
-            this.fetchAssessmentsForCourse(this.form.course_id);
-            alert('Successfully save the assessment');
-            this.toggleForm();
-          } else {
-            console.error('Failed to save assessment, response without message:', data);
-          }
-        })
+      try {
+        // 3. Add Authorization header to saveAssessment (POST) fetch
+        const response = await fetch('http://localhost:8085/api/assessments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`, // <-- ADDED HERE
+          },
+          body: JSON.stringify(assessmentData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to save assessment: ${response.status} - ${errorData.error || response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('API Response: ', data);
+        if (data.message) {
+          // Successfully added
+          // Re-fetch assessments for the specific course to update the UI
+          await this.fetchAssessmentsForCourse(this.form.course_id, token); // Re-fetch with token
+          alert('Successfully save the assessment');
+          this.toggleForm();
+        } else {
+          console.error('Failed to save assessment, response without message:', data);
+        }
+      } catch (error) {
+        console.error('Error saving assessment: ', error);
+        alert(`Error saving assessment: ${error.message}`);
+      }
     },
-    updateAssessment() {
+    async updateAssessment() { // Changed to async
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error("Authentication token not found.");
+        return;
+      }
+
       if (!this.form.course_id || !this.form.name || !this.form.type || this.form.weight === null) {
         alert("Please fill in all fields");
         return;
@@ -189,47 +231,72 @@ export default {
         weight: this.form.weight,
       };
 
-      fetch(`http://localhost:8085/api/assessments/${this.form.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(assessmentData),
-      })
-        .then((response) => {
-          if (!response.ok) throw new Error('Network response was not ok');
-          return response.json();
-        })
-        .then((data) => {
-          if (data.message) {
-            this.fetchAssessmentsForCourse(this.form.course_id);
-            alert('Successfully updated the assessment');
-            this.toggleForm();
-          } else {
-            console.error("Failed to update assessment");
-          }
-        })
+      try {
+        // 4. Add Authorization header to updateAssessment (PATCH) fetch
+        const response = await fetch(`http://localhost:8085/api/assessments/${this.form.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`, // <-- ADDED HERE
+          },
+          body: JSON.stringify(assessmentData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to update assessment: ${response.status} - ${errorData.error || response.statusText}`);
+        }
+
+        const data = await response.json();
+        if (data.message) {
+          await this.fetchAssessmentsForCourse(this.form.course_id, token); // Re-fetch with token
+          alert('Successfully updated the assessment');
+          this.toggleForm();
+        } else {
+          console.error("Failed to update assessment, response without message:", data);
+        }
+      } catch (error) {
+        console.error('Error updating assessment: ', error);
+        alert(`Error updating assessment: ${error.message}`);
+      }
     },
-    fetchAssessmentsForCourse(courseId) {
+    async fetchAssessmentsForCourse(courseId, token) { // Added token parameter
+      // Ensure token is available if this method is called independently
+      const actualToken = token || localStorage.getItem('authToken');
+      if (!actualToken) {
+        console.error("Authentication token not found for fetching assessments.");
+        return;
+      }
+
       let url = `http://localhost:8085/api/assessments?course_id=${courseId}`;
 
-      fetch(url)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log('Fetched assessments for course:', courseId, data);
-          if (data.assessment_component && Array.isArray(data.assessment_component)) {
-            // Update the courseAssessments object with fetched assessments
-            this.courseAssessments[courseId] = data.assessment_component;
-          } else {
-            this.courseAssessments[courseId] = [];
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching assessments: ', error);
+      try {
+        // 5. Add Authorization header to fetchAssessmentsForCourse fetch
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json', // Optional for GET, but good for consistency
+            'Authorization': `Bearer ${actualToken}`, // <-- ADDED HERE
+          },
         });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to fetch assessments for course ${courseId}: ${response.status} - ${errorData.error || response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Fetched assessments for course:', courseId, data);
+        if (data.assessment_component && Array.isArray(data.assessment_component)) {
+          this.courseAssessments[courseId] = data.assessment_component;// Use $set for reactivity
+        } else {
+          this.courseAssessments[courseId] = []; // Use $set for reactivity
+        }
+      } catch (error) {
+        console.error('Error fetching assessments: ', error);
+      }
     },
     filteredAssessments(courseId) {
-      // Return the filtered assessments for a specific course
       return this.courseAssessments[courseId] || [];
     },
     editAssessment(assessment) {
@@ -241,23 +308,21 @@ export default {
         weight: assessment.weight,
       };
       this.showForm = true;
-      this.selectedAssessmentId = assessment.id; // Track the assessment being edited
+      this.selectedAssessmentId = assessment.id;
     },
     confirmDelete(assessmentId, event) {
-      event.stopPropagation();  // Prevent event propagation to avoid other handlers
+      event.stopPropagation();
 
       console.log('Delete clicked', assessmentId);
 
-      // Find the course id of the assessment based on the course
       let assessmentToDelete = null;
       for (let courseId in this.courseAssessments) {
         assessmentToDelete = this.courseAssessments[courseId].find(a => a.id === assessmentId);
         if (assessmentToDelete) {
-          break; // Exit loop once assessment is found
+          break;
         }
       }
 
-      // If the assessment is found, show confirmation
       if (assessmentToDelete) {
         this.selectedAssessment = assessmentToDelete;
         this.showConfirmation = true;
@@ -269,27 +334,44 @@ export default {
       this.showConfirmation = false;
       this.selectedAssessment = null;
     },
-    deleteAssessment() {
-      // Check if selectedAssessment is valid before proceeding
+    async deleteAssessment() { // Changed to async
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error("Authentication token not found.");
+        return;
+      }
+
       if (this.selectedAssessment) {
-        fetch(`http://localhost:8085/api/assessments/${this.selectedAssessment.id}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.message) {
-              // Remove the assessment from the list after successful deletion
-              this.assessments = this.assessments.filter(a => a.id !== this.selectedAssessment.id);
-               this.fetchAssessmentsForCourse(this.selectedAssessment.course_id);
-              this.showConfirmation = false; // Hide the confirmation modal
-              this.selectedAssessment = null; // Reset the selected assessment
-              alert('Assessment deleted successfully');
-            }
-          })
-          .catch(error => {
-            console.error('Error deleting assessment:', error);
+        try {
+          // 6. Add Authorization header to deleteAssessment (DELETE) fetch
+          const response = await fetch(`http://localhost:8085/api/assessments/${this.selectedAssessment.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`, // <-- ADDED HERE
+            },
           });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to delete assessment: ${response.status} - ${errorData.error || response.statusText}`);
+          }
+
+          const data = await response.json();
+          if (data.message) {
+            // Remove the assessment from the list after successful deletion
+            // Re-fetch assessments for the specific course to update the UI
+            await this.fetchAssessmentsForCourse(this.selectedAssessment.course_id, token); // Re-fetch with token
+            this.showConfirmation = false;
+            this.selectedAssessment = null;
+            alert('Assessment deleted successfully');
+          } else {
+            console.error("Failed to delete assessment, response without message:", data);
+          }
+        } catch (error) {
+          console.error('Error deleting assessment:', error);
+          alert(`Error deleting assessment: ${error.message}`);
+        }
       }
     },
     getIcon(type) {

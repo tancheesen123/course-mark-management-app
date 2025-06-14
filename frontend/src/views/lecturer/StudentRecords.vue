@@ -32,7 +32,10 @@ export default {
   },
   async mounted() {
     const token = localStorage.getItem('authToken');
+    console.log('Token from localStorage (StudentRecords.vue):', token); // Confirm token value
+    console.log('Token type:', typeof token);
     if(!token) {
+      console.error('No token found, cannot fetch courses. Redirecting or showing error.');
       this.errorMessage = "User not authenticated";
       return;
     }

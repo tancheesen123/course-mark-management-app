@@ -1,29 +1,48 @@
 <?php
-namespace Src\Controllers;
 
-use Src\Services\CourseService;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+namespace App\Controllers;
 
-class CourseController {
-    private $courseService;
+use Slim\Psr7\Request;
+use Slim\Psr7\Response;
+use App\Services\CourseService;
+use Exception;
 
-    public function construct() {
-        $this->courseService = new CourseService();
+class CourseController
+{
+    private CourseService $courseService;
+
+    public function __construct(CourseService $courseService)
+    {
+        $this->courseService = $courseService;
     }
 
-     public function getCoursesByLecturer(Request $request, Response $response, $args): Response {
-        $queryParams = $request->getQueryParams();
-
-        if (!isset($queryParams['lecturer_id'])) {
-            $response->getBody()->write(json_encode(["error" => "Missing lecturer_id"]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    public function getAllCourses(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $courses = $this->courseService->getAllCourses();
+            $response->getBody()->write(json_encode(["courses" => $courses]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode([
+                "error" => "Failed to fetch courses",
+                "details" => $e->getMessage()
+            ]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
+    }
 
-        $courses = $this->courseService->getCoursesByLecturerId($queryParams['lecturer_id']);
-        $response->getBody()->write(json_encode($courses));
-        return $response->withHeader('Content-Type', 'application/json');
+    public function getCoursesByLecturer(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $courses = $this->courseService->getAllCourses(); // Or implement lecturer-specific logic
+            $response->getBody()->write(json_encode(["courses" => $courses]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode([
+                "error" => "Failed to fetch courses for lecturer",
+                "details" => $e->getMessage()
+            ]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
     }
 }
-
-?>
