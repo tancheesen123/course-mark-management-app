@@ -37,30 +37,6 @@ class StudentController
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    // public function show(Request $request, Response $response, $args)
-    // {
-    //     $id = $args['id'] ?? null;
-
-    //     try {
-    //         $student = $this->studentService->getStudentById($id);
-    //         if (!$student) {
-    //             $response->getBody()->write(json_encode(['error' => 'Student not found']));
-    //             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
-    //         }
-
-    //         $response->getBody()->write(json_encode($student));
-    //         return $response->withHeader('Content-Type', 'application/json');
-    //     } catch (\InvalidArgumentException $e) {
-    //         $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
-    //         return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-    //     }
-    // }
-}
-=======
-=======
->>>>>>> Stashed changes
     public function findEnrollmentById(Request $request, Response $response, array $args): Response
     {
         // Example: Find student enrollment by ID
@@ -69,9 +45,4 @@ class StudentController
         $response->getBody()->write(json_encode(['message' => "Find student enrollment by ID: {$studentId}"]));
         return $response->withHeader('Content-Type', 'application/json');
     }
-<<<<<<< Updated upstream
 }
->>>>>>> Stashed changes
-=======
-}
->>>>>>> Stashed changes
