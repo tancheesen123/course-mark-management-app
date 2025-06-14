@@ -38,6 +38,7 @@ class StudentController
     }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     // public function show(Request $request, Response $response, $args)
     // {
     //     $id = $args['id'] ?? null;
@@ -58,6 +59,8 @@ class StudentController
     // }
 }
 =======
+=======
+>>>>>>> Stashed changes
     public function findEnrollmentById(Request $request, Response $response, array $args): Response
     {
         // Example: Find student enrollment by ID
@@ -66,5 +69,9 @@ class StudentController
         $response->getBody()->write(json_encode(['message' => "Find student enrollment by ID: {$studentId}"]));
         return $response->withHeader('Content-Type', 'application/json');
     }
+<<<<<<< Updated upstream
+}
+>>>>>>> Stashed changes
+=======
 }
 >>>>>>> Stashed changes

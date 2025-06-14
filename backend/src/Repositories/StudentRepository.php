@@ -10,6 +10,7 @@ class StudentRepository
     public function getAllStudents(): array
     {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         // echo "In repository";
         $pdo = getPDO();
         $stmt = $pdo->query("SELECT * FROM test");
@@ -35,6 +36,18 @@ class StudentRepository
         }
     }
 
+=======
+        try {
+            $pdo = getPDO();
+            $stmt = $pdo->query("SELECT * FROM students");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching all students: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+>>>>>>> Stashed changes
     public function findStudentsByCourseAndAssessment(int $courseId, int $assessmentId): array
     {
         try {
@@ -208,4 +221,7 @@ class StudentRepository
         }
     }
 }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

@@ -30,6 +30,7 @@ class StudentService
     public function getStudentRecords(int $courseId, string $assessmentName): array
     {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         // you can add any business logic here if needed
         // echo "In Service...";
         return $this->studentRepository->getAll();
@@ -111,6 +112,76 @@ class StudentService
         $mark = $data['mark'] ?? null;
 >>>>>>> Stashed changes
 
+=======
+        try {
+            $assessment = $this->assessmentRepository->getAssessmentByCourseIdAndName($courseId, $assessmentName);
+
+            if (!$assessment) {
+                throw new \RuntimeException('Assessment not found for the given course and name.', 404);
+            }
+
+            return $this->studentRepository->findStudentsByCourseAndAssessment($courseId, $assessment['id']);
+        } catch (PDOException $e) {
+            throw new \Exception("Failed to retrieve student records. Please try again later.");
+        }
+    }
+
+    public function batchUpdateStudentMarks(int $courseId, string $assessmentName, array $marksToUpdate): string
+    {
+        if (!is_array($marksToUpdate)) {
+            throw new \InvalidArgumentException('Invalid marks data provided.');
+        }
+
+        $pdo = getPDO(); // ✅ use global function from db.php
+
+        try {
+            $pdo->beginTransaction();
+
+            $assessment = $this->assessmentRepository->getAssessmentByCourseIdAndName($courseId, $assessmentName);
+
+            if (!$assessment) {
+                throw new \RuntimeException('Assessment not found for the given course and name.', 404);
+            }
+
+            $assessmentId = $assessment['id'];
+            $assessmentWeight = $assessment['weight'];
+
+            foreach ($marksToUpdate as $markData) {
+                $studentId = $markData['student_id']?? null;
+                $mark = $markData['mark']?? null;
+
+                if ($studentId === null || $mark === null || !is_numeric($mark) || $mark < 0 || $mark > $assessmentWeight) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    throw new \InvalidArgumentException(
+                        'Invalid mark value for student_id: ' . $studentId . '. Mark must be non-negative and not exceed assessment weight (' . $assessmentWeight . ').',
+                        400
+                    );
+                }
+
+                $this->studentRepository->updateStudentMark($studentId, $assessmentId, $mark);
+            }
+            return 'Marks updated successfully.';
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            // Re-throw the specific exception if it's already a RuntimeException or InvalidArgumentException
+            if ($e instanceof \RuntimeException || $e instanceof \InvalidArgumentException) {
+                throw $e;
+            }
+            throw new \Exception("Failed to batch update student marks. " . $e->getMessage());
+        }
+    }
+
+    public function addStudentRecord(array $data): string
+    {
+        $name = $data['name'] ?? null;
+        $matricNumber = $data['matric_number'] ?? null;
+        $courseId = $data['course_id'] ?? null;
+        $assessmentName = $data['assessment_name'] ?? null;
+        $mark = $data['mark'] ?? null;
+
+>>>>>>> Stashed changes
         if (empty($name) || empty($matricNumber) || empty($courseId) || empty($assessmentName) || $mark === null || !is_numeric($mark)) {
             throw new \InvalidArgumentException('Missing or invalid required fields (name, matric_number, mark, course_id, assessment_name).', 400);
         }
