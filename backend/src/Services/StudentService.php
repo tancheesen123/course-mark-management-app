@@ -213,7 +213,49 @@ public function calculateTotalMarks(int $courseId): array
     ];
 }
 
+public function calculateSingleStudentMarks($courseId, $student_id): array
+{
+    // 1. Fetch all necessary data using repository methods
+    $assessments = $this->studentRepository->getAssessmentsByCourseId($courseId);
+    $students = $this->studentRepository->getStudentsWithNamesEnrolledInCourse($courseId);
+    $marks = $this->studentRepository->getMarksByCourse($courseId);
 
+    // 2. Build map of assessments
+    $assessmentMap = [];
+    foreach ($assessments as $a) {
+        $assessmentMap[$a['id']] = [
+            'id' => $a['id'],
+            'name' => $a['name'],
+            'weight' => (float)$a['weight'],
+        ];
+    }
+
+    // 3. Organize marks by student_id and assessment_id
+    $studentMarks = [];
+    foreach ($marks as $m) {
+        $studentMarks[$m['student_id']][$m['assessment_id']] = (float)$m['mark'];
+    }
+
+    // 4. Construct student-wise output
+    $output = [];
+    foreach ($students as $s) {
+        if( $s['id'] == $student_id ){
+            $sid = $s['id'];
+        $output[] = [
+            'id' => $sid,
+            'name' => $s['name'],
+            'matric_number' => $s['matric_number'],
+            'marks' => $studentMarks[$sid] ?? [],
+        ];
+        }
+        
+    }
+
+    return [
+        'students' => $output,
+        'assessments' => array_values($assessmentMap),
+    ];
+}
 
 
 

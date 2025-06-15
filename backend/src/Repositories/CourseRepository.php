@@ -44,4 +44,36 @@ class CourseRepository
             throw new \RuntimeException("Failed to fetch courses: " . $e->getMessage(), 0, $e);
         }
     }
+
+    public function getCostViaStudentId($student_id): array
+    {
+        try {
+            $pdo = getPDO();
+            if ($student_id) {
+                $stmt = $pdo->prepare("
+                SELECT 
+                    c.course_id,
+                    c.course_code,
+                    c.course_name,
+                    c.section,
+                    c.semester,
+                    c.year,
+                    c.lecturer_id
+                FROM 
+                    enrollments e
+                JOIN 
+                    course c ON e.course_id = c.course_id
+                WHERE 
+                    e.student_id = ?
+            ");
+                $stmt->execute([$student_id]);
+            } else {
+                $stmt = $pdo->query("SELECT * FROM assessment_component");
+            }
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching assessments: " . $e->getMessage());
+            throw $e;
+        }
+    }
 }

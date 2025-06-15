@@ -33,4 +33,14 @@ class CourseService
             throw $e; // Re-throw to be caught by the controller
         }
     }
+
+    public function getCostViaStudent($studentId): array
+    {
+        try {
+            return $this->courseRepository->getCostViaStudentId($studentId);
+        } catch (Exception $e) {
+            error_log("Error in CourseService getting lecturer courses: " . $e->getMessage());
+            throw $e; // Re-throw to be caught by the controller
+        }
+    }
 }

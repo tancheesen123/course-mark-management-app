@@ -36,6 +36,7 @@ return function (App $app) {
         $group->patch('/student-marks/batch-update', [StudentRecordController::class, 'batchUpdateStudentMarks']);
         $group->post('/student-records/add', [StudentRecordController::class, 'addStudentRecord']);
         $group->post('/studentCourseMark', [StudentRecordController::class, 'findStudentCourseMark']);
+        $group->post('/findChart', [StudentRecordController::class, 'findChartData']);
         $group->post('/total-calculation', [StudentRecordController::class, 'getTotalCalculation']);
         $group->get('/lecturer-courses',[StudentRecordController::class, 'getLecturerCourses']);
         $group->post('/exportCSV/{row}',[StudentRecordController::class, 'exportToCsv']);

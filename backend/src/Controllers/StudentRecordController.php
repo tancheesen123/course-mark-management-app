@@ -23,6 +23,52 @@ class StudentRecordController
         $this->courseService = $courseService;
     }
 
+    public function findChartData(Request $request, Response $response, array $args): Response
+    {
+        $data = $request->getParsedBody();
+        $student_id = $data['student_id'] ?? null;
+
+        if (!$student_id) {
+            $response->getBody()->write(json_encode(['error' => ' student_id.']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+        $totalMarks = 0;
+        $finalExamMarks = 0;
+        $totalAssessment = 0;
+        $totalAssessmentWeight = 0;
+        $totalWeight = 0;
+        $finalExamAssessments = [];
+        $output = [];
+        try {
+            $courses = $this->courseService->getCostViaStudent($student_id);
+
+            foreach ($courses as $course) {
+                    $output[] = $this->studentService->calculateSingleStudentMarks($course["course_id"],$student_id);
+                }
+            // error_log("totalMarks". $totalMarks); // Log course ID for debugging
+            // error_log("finalExamMarks". $finalExamMarks); // Log course ID for debugging
+            // error_log("Assessments: " . json_encode($assessments)); // Log assessments for debugging
+            // $students = $this->studentService->getStudentRecords((int)$courseId, $assessmentName);
+            $response->getBody()->write(json_encode(
+                ['course' => $courses,
+                'output' => $output,
+                // 'finalExamAssessments' => $finalExamAssessments,
+            ]));
+
+
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        } catch (\RuntimeException $e) { // Catch specific exceptions thrown by service
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withStatus($e->getCode() ?: 404)->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode([
+                "error" => "Failed to fetch student records",
+                "details" => $e->getMessage()
+            ]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     public function findStudentCourseMark(Request $request, Response $response, array $args): Response
     {
         $data = $request->getParsedBody();

@@ -71,7 +71,7 @@ export default {
                 });
 
                 const courseList = await res.json();
-
+                console.log("Course List:", courseList);
                 for (const course of courseList) {
                     const totalRes = await fetch("http://localhost:8085/api/total-calculation", {
                         method: "POST",
@@ -140,12 +140,17 @@ export default {
                 ];
             } else {
                 datasets = course.students.map((student) => {
-                    const studentMarks = assessmentIds.map((id) => student.marks[id] || 0);
+                    let cumulative = 0;
+                    const cumulativeMarks = assessmentIds.map((id) => {
+                        cumulative += student.marks[id] || 0;
+                        return cumulative;
+                    });
+                    this.student_name = student.name;
                     return {
                         label: student.name,
-                        data: studentMarks,
-                        fill: false,
+                        data: cumulativeMarks,
                         borderColor: this.getRandomColor(),
+                        fill: false,
                         tension: 0.3,
                     };
                 });
@@ -179,7 +184,7 @@ export default {
                         },
                         y: {
                             beginAtZero: true,
-                            max: 70,
+                            max: 100,
                             title: {
                                 display: true,
                                 text: "Marks (%)",
@@ -189,15 +194,33 @@ export default {
                         },
                     },
                     plugins: {
+                        // tooltip: {
+                        //     padding: 12, // 👈 Increase padding inside the tooltip box
+                        //     bodyFont: {
+                        //         size: 16, // 👈 Font size for content
+                        //     },
+                        //     titleFont: {
+                        //         size: 18, // 👈 Font size for title
+                        //     },
+                        //     boxPadding: 8, // 👈 Space between color box and text
+                        // },
                         tooltip: {
-                            padding: 12, // 👈 Increase padding inside the tooltip box
-                            bodyFont: {
-                                size: 16, // 👈 Font size for content
+                            padding: 12,
+                            bodyFont: { size: 16 },
+                            titleFont: { size: 18 },
+                            boxPadding: 8,
+                            callbacks: {
+                                label: function (context) {
+                                    const data = context.dataset.data;
+                                    const index = context.dataIndex;
+                                    const current = data[index];
+                                    const previous = index > 0 ? data[index - 1] : 0;
+                                    const delta = current - previous;
+                                    const student_name = "Student";
+
+                                    return `${student_name}:+${delta} → Total: ${current}`;
+                                },
                             },
-                            titleFont: {
-                                size: 18, // 👈 Font size for title
-                            },
-                            boxPadding: 8, // 👈 Space between color box and text
                         },
                         legend: {
                             position: "bottom",
