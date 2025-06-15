@@ -19,6 +19,29 @@ class StudentRepository
         }
     }
 
+    public function findStudentsById($id)
+    {
+        try {
+            $pdo = getPDO();
+            $stmt = $pdo->prepare("SELECT * FROM Students WHERE user_id = ?");
+            $stmt->execute([$id]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching student by ids: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function findEnrollmentById($id)
+    {
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("SELECT * FROM enrollments WHERE student_id = ?");
+        $stmt->execute([$id]);
+        $enrollment = $stmt->fetchAll();
+
+        return $enrollment ?: [];
+    }
+
     public function findStudentsByCourseAndAssessment(int $courseId, int $assessmentId): array
     {
         try {

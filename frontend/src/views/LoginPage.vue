@@ -8,22 +8,39 @@
 
       <div class="mb-3">
         <label for="email" class="block text-900 font-medium mb-2">Email</label>
-        <InputText id="email" v-model="email" type="email" placeholder="Email address" class="w-full" />
+        <InputText
+          id="email"
+          v-model="email"
+          type="email"
+          placeholder="Email address"
+          class="w-full"
+        />
       </div>
 
       <div class="mb-3">
-        <label for="password" class="block text-900 font-medium mb-2">Password</label>
-        <Password id="password" v-model="password" placeholder="Password" :feedback="false" class="w-full" toggleMask />
+        <label for="password" class="block text-900 font-medium mb-2"
+          >Password</label
+        >
+        <Password
+          id="password"
+          v-model="password"
+          placeholder="Password"
+          :feedback="false"
+          class="w-full"
+          toggleMask
+        />
       </div>
 
       <div class="flex align-items-center justify-content-between mb-4">
         <div>
           <Checkbox id="remember" v-model="rememberMe" :binary="true" />
-          <label for="remember" class="ml-2 text-sm text-600">Remember me</label>
+          <label for="remember" class="ml-2 text-sm text-600"
+            >Remember me</label
+          >
         </div>
         <a class="forgot-password">Forgot password?</a>
       </div>
-      <p class="error-message" id="errorMessage" style="text-align: center;"></p>
+      <p class="error-message" id="errorMessage" style="text-align: center"></p>
       <Button label="Sign In" class="login-button" @click="loginUser()" />
     </div>
   </div>
@@ -75,7 +92,22 @@ export default {
         if (data.user.role == 1) {
           this.$router.push("/lecturerMenu/dashboard");
         } else if (data.user.role == 2) {
-          this.$router.push("/studentMenu/dashboard");
+          const id = data.user.id;          
+          const response2 = await fetch(
+            `http://localhost:8085/api/studentsById/${id}`, // ID is in URL
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${data.token}`,
+              },
+            }
+          );
+
+          const data2 = await response2.json();
+          if (response2.ok) {
+            localStorage.setItem("student_id", data2.student_id);
+            this.$router.push("/studentMenu/dashboard");
+          }
         } else if (data.user.role == 3) {
           this.$router.push("/advisorMenu/dashboard");
         } else {
@@ -83,7 +115,8 @@ export default {
         }
       } else {
         //add error message
-        document.getElementById("errorMessage").innerText = data.message || "Invalid credentials";
+        document.getElementById("errorMessage").innerText =
+          data.message || "Invalid credentials";
         this.$toast.add({
           severity: "error",
           summary: "Login Failed",
@@ -91,6 +124,22 @@ export default {
           life: 3000,
         });
       }
+    },
+
+    async findStudentId(user_id, token) {
+      const response = await fetch(`http://localhost:8085/api/studentsById`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: user_id,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("response student id:", data);
+      console.log("response reponse:", response);
     },
   },
 };
@@ -169,5 +218,4 @@ export default {
 .login-button:hover {
   background-color: #600c20;
 }
-
 </style>

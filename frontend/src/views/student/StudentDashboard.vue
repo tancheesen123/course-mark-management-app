@@ -28,6 +28,8 @@ export default {
   },
   mounted() {
     const userString = localStorage.getItem("user");
+    const student_id = localStorage.getItem("student_id");
+    console.log("Student ID from localStorage:", student_id); // Debugging line
     if (userString) {
       try {
         const user = JSON.parse(userString);

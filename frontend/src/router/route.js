@@ -17,13 +17,17 @@ import LecturerDashboard from "@/views/lecturer/LecturerDashboard.vue";
 
 import AcademicAdvisorMenu from "@/views/advisor/AcademicAdvisorMenu.vue";
 import AcademicAdvisorDashboard from "@/views/advisor/AcademicAdvisorDashboard.vue";
-import AdviseeList from "@/views/advisor/AdviseeList.vue";
+import CourseList from "@/views/advisor/CourseList.vue";
+import AdviseeListView from "@/views/advisor/AdviseeList.vue";
+import AdviseeDetailsView from "@/views/advisor/AdviseeDetailsView.vue";
 import ReportList from "@/views/advisor/ReportList.vue";
 
 import StudentMenu from "@/views/student/StudentMenu.vue";
 import StudentDashboard from "@/views/student/StudentDashboard.vue";
 import StudentRecordsMark from "@/views/lecturer/StudentRecordsMark.vue";
 import AddStudentRecord from "@/views/lecturer/AddStudentRecord.vue";
+import OneStudentCourse from "@/views/student/OneStudentCourse.vue";
+import StudentMark from "@/views/student/StudentMark.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -47,11 +51,11 @@ const router = createRouter({
                 // { path: '', redirect: '/lecturerDashboard' },
                 { path: "dashboard", component: LecturerDashboard },
                 { path: "student-record", component: StudentRecords },
-                { path: "student-record/assessment", component: StudentRecordAssessment, props: route => ({ courseId: route.query.course_id})},
-                { path: "student-record/assessment/mark", component: StudentRecordsMark, props: route => ({ courseId: route.query.course_id})},
+                { path: "student-record/assessment", component: StudentRecordAssessment, props: route => ({ courseId: route.query.course_id }) },
+                { path: "student-record/assessment/mark", component: StudentRecordsMark, props: route => ({ courseId: route.query.course_id }) },
                 {
                     path: "student-record/assessment/add",
-                    name: "AddStudentRecord", 
+                    name: "AddStudentRecord",
                     component: AddStudentRecord,
                     props: (route) => ({ course_id: route.query.course_id, name: route.query.name })
                 },
@@ -63,10 +67,21 @@ const router = createRouter({
             path: "/AdvisorMenu",
             component: AcademicAdvisorMenu,
             children: [
-                // { path: "", redirect: "/academicAdvisorDashboard/dashboard" },
                 { path: "dashboard", component: AcademicAdvisorDashboard },
-                { path: 'advisees', component: AdviseeList },  
-                { path: 'reports', component: ReportList },   
+                { path: "courses", component: CourseList },
+                {
+                    path: 'advisor/courses/:courseId/students',
+                    name: 'AdviseeList',
+                    component: AdviseeListView,
+                    props: true
+                },
+                {
+                    path: 'advisor/courses/:courseId/students/:studentId/details',
+                    name: 'AdviseeDetailsView',
+                    component: AdviseeDetailsView,
+                    props: true
+                },
+                { path: 'reports', component: ReportList },
             ],
         },
         {
@@ -75,6 +90,8 @@ const router = createRouter({
             children: [
                 // { path: "", redirect: "/academicAdvisorDashboard/dashboard" },
                 { path: "dashboard", component: StudentDashboard },
+                { path: "studentCourse", component: OneStudentCourse },
+                { path: "studentCourse/mark", component: StudentMark, props: route => ({ courseId: route.query.course_id})},
                 { path: "addperson", component: Addperson },
             ],
         },

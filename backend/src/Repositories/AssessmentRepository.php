@@ -24,11 +24,58 @@ class AssessmentRepository
         }
     }
 
+    public function getAssessmentsMark($courseId, $student_id): array
+    {
+        try {
+            $pdo = getPDO();
+            if ($courseId) {
+                $stmt = $pdo->prepare("
+                SELECT 
+                    s.id AS assessment_id,
+                    s.course_id,
+                    s.name,
+                    s.weight,
+                    s.type,
+                    e.mark,
+                    e.feedback
+                FROM 
+                    assessment_component s
+                JOIN 
+                    student_assessments e ON s.id = e.assessment_id
+                WHERE 
+                    course_id = ?
+                    AND e.student_id = ?
+
+                ");
+                $stmt->execute([$courseId, $student_id]);
+            } else {
+                $stmt = $pdo->query("SELECT * FROM assessment_component");
+            }
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching assessments: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     public function getAssessmentById(int $id): ?array
     {
         try {
             $pdo = getPDO();
             $stmt = $pdo->prepare("SELECT * FROM assessment_component WHERE id = ?");
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (PDOException $e) {
+            error_log("Error fetching assessment by ID: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function getAssessmentByStudentId(int $id): ?array
+    {
+        try {
+            $pdo = getPDO();
+            $stmt = $pdo->prepare("SELECT * FROM assessment_component WHERE student_id = ?");
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
         } catch (PDOException $e) {

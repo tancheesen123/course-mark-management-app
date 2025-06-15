@@ -4,9 +4,21 @@
     <aside class="sidebar">
       <img src="@/assets/Logo-UTM-white.png" alt="UTM Logo" class="logo" />
       <nav class="nav-links">
-        <router-link to="/advisorMenu/dashboard" exact-active-class="active-link">Dashboard</router-link>
-        <router-link to="/advisorMenu/advisees" exact-active-class="active-link">Advisees</router-link>
-        <router-link to="/advisorMenu/reports" exact-active-class="active-link">Reports</router-link>
+        <router-link
+          to="/advisorMenu/dashboard"
+          exact-active-class="active-link"
+          >Dashboard</router-link
+        >
+        <router-link
+          to="/advisorMenu/courses"
+          :class="{ 'active-link': isAdviseeActive }"
+        >
+          Advisees
+        </router-link>
+
+        <router-link to="/advisorMenu/reports" exact-active-class="active-link"
+          >Reports</router-link
+        >
       </nav>
       <button class="logout-btn" @click="logoutUser">Log Out</button>
     </aside>
@@ -20,14 +32,23 @@
 
 <script>
 export default {
-  name: 'AcademicAdvisorMenu',
+  name: "AcademicAdvisorMenu",
   methods: {
     logoutUser() {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      this.$router.push('/');
-    }
-  }
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      this.$router.push("/");
+    },
+  },
+  computed: {
+    isAdviseeActive() {
+      const path = this.$route.path;
+      return (
+        path.includes("/advisorMenu/courses") ||
+        path.includes("/advisor/courses")
+      );
+    },
+  },
 };
 </script>
 
@@ -35,7 +56,7 @@ export default {
 .dashboard-layout {
   display: flex;
   height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
 }
 
 /* Sidebar */

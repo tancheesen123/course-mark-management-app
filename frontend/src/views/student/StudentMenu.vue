@@ -5,6 +5,7 @@
       <img src="@/assets/Logo-UTM-white.png" alt="UTM Logo" class="logo" />
       <nav class="nav-links">
         <router-link to="/studentMenu/dashboard" exact-active-class="active-link">Dashboard</router-link>
+        <router-link to="/studentMenu/studentCourse" exact-active-class="active-link">Courses</router-link>
         <router-link to="/studentMenu/addPerson" exact-active-class="active-link">Add Person</router-link>
       </nav>
       <button class="logout-btn" @click="logoutUser">Log Out</button>
