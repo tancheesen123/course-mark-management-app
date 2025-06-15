@@ -8,6 +8,10 @@ use Slim\Factory\AppFactory;
 use Slim\Middleware\BodyParsingMiddleware;
 use App\Middleware\CorsMiddleware;
 
+use App\Services\AdvisorService;
+use App\repositories\AdvisorRepository;
+
+
 // $app = AppFactory::create();
 // $app->get('/hello', function ($request, $response) {
 //     $data = ['message' => 'Hello, World!'];
@@ -469,6 +473,142 @@ if ($student) {
     ]));
     return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
 }
+});
+
+
+// ADVISOR PART
+$app->get('/api/advisor/courses', function ($request, $response) {
+    $queryParams = $request->getQueryParams();
+    $advisorUserId = $queryParams['advisor_user_id'] ?? null;
+
+    if (!$advisorUserId) {
+        $response->getBody()->write(json_encode([
+            "error" => "Missing advisor_user_id in query parameters."
+        ]));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    try {
+        $pdo = getPDO();
+
+        $stmt = $pdo->prepare("SELECT DISTINCT course_id FROM advisor_student WHERE advisor_user_id = ?");
+        $stmt->execute([$advisorUserId]);
+        $courseIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (empty($courseIds)) {
+            $response->getBody()->write(json_encode([
+                "courses" => [],
+                "message" => "No courses found for this advisor."
+            ]));
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        }
+
+        $placeholders = implode(',', array_fill(0, count($courseIds), '?'));
+        $stmt = $pdo->prepare("SELECT * FROM course WHERE course_id IN ($placeholders)");
+        $stmt->execute($courseIds);
+        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $response->getBody()->write(json_encode([
+            "courses" => $courses
+        ]));
+        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+
+    } catch (PDOException $e) {
+        $response->getBody()->write(json_encode([
+            "error" => "Database error",
+            "details" => $e->getMessage()
+        ]));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+});
+
+
+
+$app->get('/api/public/advisor/courses/{course_id}/students', function ($request, $response, $args) {
+    $advisorId = $request->getQueryParams()['advisor_user_id'] ?? null;
+    $courseId = $args['course_id'] ?? null;
+
+    if (!$advisorId || !$courseId) {
+        $response->getBody()->write(json_encode(['success' => false, 'message' => 'Missing advisor_user_id or course_id']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    try {
+        $service = new AdvisorService();
+        $students = $service->getAdviseesByCourse($advisorId, $courseId);
+
+        $response->getBody()->write(json_encode([
+            'success' => true,
+            'advisees' => $students
+        ]));
+        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+
+    } catch (Exception $e) {
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+});
+
+$app->get('/api/public/advisor/courses/{course_id}/students/{student_id}/details', function ($request, $response, $args) {
+    $courseId = $args['course_id'] ?? null;
+    $studentId = $args['student_id'] ?? null;
+
+    if (!$courseId || !$studentId) {
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Missing course_id or student_id'
+        ]));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    try {
+        $service = new \App\Services\AdvisorService();
+        $detail = $service->getStudentDetail($studentId, $courseId);
+
+        $response->getBody()->write(json_encode([
+            'success' => true,
+            'details' => $detail
+        ]));
+        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        
+    } catch (\Exception $e) {
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+});
+
+
+$app->get('/api/advisees/{advisor_id}', function ($request, $response, $args) {
+    $advisorId = $args['advisor_id'];
+    $service = new AdvisorService();
+    $stats = $service->getAdviseeStats($advisorId);
+
+    $response->getBody()->write(json_encode($stats));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+
+$app->get('/api/advisee-performance/{advisor_id}', function ($request, $response, $args) {
+    $advisorId = $args['advisor_id'];
+    $service = new AdvisorService();
+    $data = $service->getAdvisorPerformance($advisorId);
+
+    $response->getBody()->write(json_encode($data));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+$app->get('/api/advisor/course-wise-stats/{advisor_id}', function ($request, $response, $args) {
+    $advisorId = $args['advisor_id'];
+    $service = new AdvisorService();
+    $data = $service->getCourseWiseStats($advisorId);
+    $response->getBody()->write(json_encode($data));
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 $app ->run();
