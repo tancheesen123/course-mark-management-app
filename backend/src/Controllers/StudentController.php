@@ -15,34 +15,42 @@ class StudentController
         $this->studentService = $studentService;
     }
 
-    public function index(Request $request, Response $response, array $args): Response
+    public function index(Request $request, Response $response, $args)
     {
-        // Example: Get all students
-        try {
-            $students = $this->studentService->getAllStudents(); // You'd need this method in StudentService
-            $response->getBody()->write(json_encode(['students' => $students]));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-        } catch (\Exception $e) {
-            $response->getBody()->write(json_encode(['error' => 'Failed to fetch students', 'details' => $e->getMessage()]));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    }
+        // echo "In controller...";
+        $students = $this->studentService->getAllStudents();
 
-    public function findById(Request $request, Response $response, array $args): Response
-    {
-        // Example: Find student by ID
-        $studentId = (int)$request->getQueryParams()['id']; // Assuming ID comes from query param
-        // Implement logic to get student by ID from service/repository
-        $response->getBody()->write(json_encode(['message' => "Find student by ID: {$studentId}"]));
+        $response->getBody()->write(json_encode($students));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    public function findEnrollmentById(Request $request, Response $response, array $args): Response
+    public function findById(Request $request, Response $response, $args)
     {
-        // Example: Find student enrollment by ID
-        $studentId = (int)$request->getQueryParams()['id']; // Assuming ID comes from query param
-        // Implement logic to get student enrollment by ID from service/repository
-        $response->getBody()->write(json_encode(['message' => "Find student enrollment by ID: {$studentId}"]));
+        // $data = $request->getParsedBody();
+        $id = $args['id'] ?? null;
+        $students = $this->studentService->getStudentById($id);
+        error_log("Student data: " . json_encode($students));
+        $response->getBody()->write(json_encode([
+            'student_id' => $students[0]['id'] ?? null,
+        ]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function findEnrollmentById(Request $request, Response $response, $args)
+    {
+        $data = $request->getParsedBody();
+        $id = $data['id'] ?? null;
+
+        $students = $this->studentService->getStudentById( $id);
+        //display student array
+
+        error_log("Student Data: " . print_r($students, true)); // Log the student ID for debugging
+        error_log("Student ID: " . $students[0]["id"]); // Log the student ID for debugging
+
+        $studentsEnrollment = $this->studentService->getEnrollmentById($students[0]["id"]);
+
+
+        $response->getBody()->write(json_encode($studentsEnrollment));
         return $response->withHeader('Content-Type', 'application/json');
     }
 }

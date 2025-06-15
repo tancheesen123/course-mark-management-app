@@ -18,7 +18,7 @@ return function (App $app) {
     $app->group('/api', function ($group) {
         $group->get('/users', [UserController::class, 'index']);
         $group->get('/students', [StudentController::class, 'index']); // if you meant StudentController
-        $group->get('/studentsById', [StudentController::class, 'findById']);
+        $group->get('/studentsById/{id}', [StudentController::class, 'findById']);
         $group->get('/getStudentEnrollmentById', [StudentController::class, 'findEnrollmentById']);
         $group->get('/courses', [CourseController::class, 'getCoursesByLecturer']);
          $group->get('/getAllCourses', [CourseController::class, 'getAllCourses']);
@@ -34,12 +34,14 @@ return function (App $app) {
         $group->get('/student-records', [StudentRecordController::class, 'getStudentRecords']);
         $group->patch('/student-marks/batch-update', [StudentRecordController::class, 'batchUpdateStudentMarks']);
         $group->post('/student-records/add', [StudentRecordController::class, 'addStudentRecord']);
-
+        $group->post('/studentCourseMark', [StudentRecordController::class, 'findStudentCourseMark']);
+        
         // ADVISOR PART
         $group->group('/advisor', function ($advisorGroup) {
             $advisorGroup->get('/courses/{course_id}/students', [AdvisorController::class, 'getAdviseesByCourse']);
             $advisorGroup->get('/courses/{course_id}/students/{student_id}/details', [AdvisorController::class, 'getAdviseeDetails']);
         });
+        
     })->add(new JwtMiddleware());
 };
    

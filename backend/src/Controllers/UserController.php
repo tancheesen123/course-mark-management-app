@@ -10,6 +10,7 @@ use Firebase\JWT\Key;
 class UserController
 {
     private UserService $userService;
+    private StudentService $studentService;
 
     public function __construct()
     {
@@ -20,6 +21,7 @@ class UserController
     {
         // echo "In controller...";
         $students = $this->userService->getAllStudents();
+        $students = $this->StudentService->getStudentById();
 
         $response->getBody()->write(json_encode($students));
         return $response->withHeader('Content-Type', 'application/json');
@@ -50,7 +52,7 @@ class UserController
             'sub' => $user['user_id'],
             'email' => $user['email'],
             'iat' => time(),
-            'exp' => time() + 7200 // 2 hour expiry
+            'exp' => time() + 3600 // 1 hour expiry
         ];
 
         $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');

@@ -30,6 +30,18 @@ class AssessmentService
         }
     }
 
+    public function getAssessmentsAndMark($courseId,$student_id): array
+    {
+        try {
+
+            $assessments = $this->assessmentRepository->getAssessmentsMark($courseId, $student_id);
+            return $assessments;
+        } catch (PDOException $e) {
+            error_log("Error: Failed to retrieve assessments - " . $e->getMessage());
+            throw new \Exception("Failed to retrieve assessments. Please try again later.");
+        }
+    }
+
     public function createAssessment(array $data): array
     {
         if (empty($data['course_id']) || empty($data['name']) || empty($data['type']) || empty($data['weight'])) {

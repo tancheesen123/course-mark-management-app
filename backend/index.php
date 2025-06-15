@@ -52,7 +52,11 @@ $container->set(AssessmentService::class, fn($c) =>
 $container->set(CourseController::class, fn($c) => new CourseController($c->get(CourseService::class)));
 $container->set(StudentController::class, fn($c) => new StudentController($c->get(StudentService::class)));
 $container->set(AssessmentController::class, fn($c) => new AssessmentController($c->get(AssessmentService::class)));
-$container->set(StudentRecordController::class, fn($c) => new StudentRecordController($c->get(StudentService::class)));
+$container->set(StudentRecordController::class, fn($c) => new StudentRecordController(
+    $c->get(StudentService::class),
+    $c->get(AssessmentService::class)
+));
+
 
 
 AppFactory::setContainer($container);

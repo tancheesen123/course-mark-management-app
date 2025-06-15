@@ -27,6 +27,21 @@ class StudentService
         $this->pdo = $pdo;
     }
 
+    public function getAllStudents()
+    {
+        return $this->studentRepository->getAllStudents();
+    }
+
+    public function getStudentById($id)
+    {
+
+        return $this->studentRepository->findStudentsById($id);
+    }
+
+    public function getEnrollmentById($id)
+    {
+        return $this->studentRepository->findEnrollmentById($id);
+    }
     public function getStudentRecords(int $courseId, string $assessmentName): array
     {
         try {
@@ -148,4 +163,5 @@ class StudentService
             throw $e;
         }
     }
+
 }
