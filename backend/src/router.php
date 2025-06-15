@@ -4,11 +4,14 @@ use Slim\App;
 use App\Controllers\StudentController;
 use App\Controllers\UserController;
 use App\Middleware\JwtMiddleware;
-use Src\Controllers\CourseController;
+use App\Controllers\CourseController;
+use App\Controllers\AssessmentController;
+use App\Controllers\StudentRecordController;
+use App\Middleware\CorsMiddleware;
 use App\Controllers\AdvisorController;
 
 return function (App $app) {
-    // Public route (no JWT required)
+    // Public route (no JWT required)    $app->add(new CorsMiddleware());
     
     $app->post('/api/login', [UserController::class, 'login']);
     // Protected routes
@@ -18,15 +21,25 @@ return function (App $app) {
         $group->get('/studentsById', [StudentController::class, 'findById']);
         $group->get('/getStudentEnrollmentById', [StudentController::class, 'findEnrollmentById']);
         $group->get('/courses', [CourseController::class, 'getCoursesByLecturer']);
-        
+         $group->get('/getAllCourses', [CourseController::class, 'getAllCourses']);
         // OR: $group->get('/students', [UserController::class, 'index']); if intentional
+        // Assessment Routes
+        $group->get('/assessments', [AssessmentController::class, 'getAssessments']);
+        $group->post('/assessments', [AssessmentController::class, 'createAssessment']);
+        $group->put('/assessments/{id}', [AssessmentController::class, 'updateAssessment']);
+        $group->patch('/assessments/{id}', [AssessmentController::class, 'updateAssessment']);
+        $group->delete('/assessments/{id}', [AssessmentController::class, 'deleteAssessment']);
+
+        // Student Record / Marks Routes
+        $group->get('/student-records', [StudentRecordController::class, 'getStudentRecords']);
+        $group->patch('/student-marks/batch-update', [StudentRecordController::class, 'batchUpdateStudentMarks']);
+        $group->post('/student-records/add', [StudentRecordController::class, 'addStudentRecord']);
 
         // ADVISOR PART
         $group->group('/advisor', function ($advisorGroup) {
             $advisorGroup->get('/courses/{course_id}/students', [AdvisorController::class, 'getAdviseesByCourse']);
             $advisorGroup->get('/courses/{course_id}/students/{student_id}/details', [AdvisorController::class, 'getAdviseeDetails']);
         });
-
     })->add(new JwtMiddleware());
 };
    

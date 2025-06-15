@@ -50,7 +50,7 @@ class UserController
             'sub' => $user['user_id'],
             'email' => $user['email'],
             'iat' => time(),
-            'exp' => time() + 3600 // 1 hour expiry
+            'exp' => time() + 7200 // 2 hour expiry
         ];
 
         $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');

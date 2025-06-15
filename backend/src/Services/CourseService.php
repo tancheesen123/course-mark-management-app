@@ -1,20 +1,26 @@
 <?php
 
-namespace Src\Services;
+namespace App\Services;
 
-use Src\repositories\CourseRepository;
+use App\Repositories\CourseRepository;
+use PDOException;
 
-class CourseService {
-    private $courseRepository;
+class CourseService
+{
+    private CourseRepository $courseRepository;
 
-    public function __construct() {
-        $this->courseRepository = new CourseRepository();
+    public function __construct(CourseRepository $courseRepository)
+    {
+        $this->courseRepository = $courseRepository;
     }
 
-    public function getCoursesByLecturerId($lecturerId) {
-        return $this->courseRepository->findByLecturerId($lecturerId);
+    public function getAllCourses(): array
+    {
+        try {
+            return $this->courseRepository->getAllCourses();
+        } catch (PDOException $e) {
+            error_log("Failed to retrieve all courses - " . $e->getMessage());
+            throw new \Exception("Failed to retrieve courses. Please try again later.");
+        }
     }
 }
-
-
-?>

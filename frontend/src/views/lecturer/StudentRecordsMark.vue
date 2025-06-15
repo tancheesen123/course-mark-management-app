@@ -23,13 +23,8 @@
         <span class="student-matric">{{ student.matric_number }}</span>
         <span class="student-mark">
           <span v-if="!isEditing">{{ student.mark }} / {{ assessmentWeight }}</span>
-          <input
-            v-else
-            type="number"
-            v-model.number="student.mark"
-            :class="{ 'input-error': student.markError }"
-            @input="validateMark(student)"
-          />
+          <input v-else type="number" v-model.number="student.mark" :class="{ 'input-error': student.markError }"
+            @input="validateMark(student)" />
           <span v-if="isEditing"> / {{ assessmentWeight }}</span>
         </span>
       </div>
@@ -50,6 +45,7 @@ export default {
       assessmentName: this.$route.query.name, // Access assessment_name from query params
       students: [],
       assessmentWeight: null,
+      assessmentId: null,
       errorMessage: "",
       isEditing: false, // Controls edit mode
       originalStudents: [], // To store a copy for cancellation
@@ -62,6 +58,7 @@ export default {
     async fetchData() {
       this.errorMessage = ""; // Clear previous errors
       const token = localStorage.getItem("authToken");
+      console.log(token);
       if (!token) {
         this.errorMessage = "User not authenticated";
         return;
@@ -79,6 +76,7 @@ export default {
 
         if (assessmentResponse.ok && assessmentData.assessment_component && assessmentData.assessment_component.length > 0) {
           this.assessmentWeight = assessmentData.assessment_component[0].weight;
+          this.assessmentId = assessmentData.assessment_component[0].id;
         } else {
           this.errorMessage = "Failed to load assessment details or assessment not found.";
           return;
@@ -93,7 +91,7 @@ export default {
         });
 
         const studentRecordsData = await studentRecordsResponse.json();
-
+        console.log("Student Records Data received:", studentRecordsData);
         if (studentRecordsResponse.ok && studentRecordsData.students) {
           // Add a temporary 'markError' property to each student for validation feedback
           this.students = studentRecordsData.students.map(s => ({
@@ -177,13 +175,19 @@ export default {
       // Prepare data for the API call
       const marksToUpdate = this.students.map(student => ({
         student_id: student.student_id, // Ensure student_id is passed
-        assessment_id: null, // This will be set by the backend
+        assessment_id: this.assessmentId, // This will be set by the backend
         mark: student.mark
+      }));
+
+      console.log("Payload being sent from frontend:", JSON.stringify({ // ADD THIS LINE
+        course_id: this.courseId,
+        assessment_name: this.assessmentName,
+        marks: marksToUpdate,
       }));
 
       try {
         const response = await fetch('http://localhost:8085/api/student-marks/batch-update', {
-          method: 'PATCH', // Using PATCH for partial updates (marks only)
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
@@ -210,15 +214,15 @@ export default {
       }
     },
     addStudentRecord() {
-    // Navigate to the new AddStudentRecord component, passing current course and assessment context
-    this.$router.push({
-      name: 'AddStudentRecord', // Use the name defined in your router
-      query: {
-        course_id: this.courseId,
-        name: this.assessmentName // This is the assessment name (e.g., 'Quiz 1')
-      }
-    });
-  },
+      // Navigate to the new AddStudentRecord component, passing current course and assessment context
+      this.$router.push({
+        name: 'AddStudentRecord', // Use the name defined in your router
+        query: {
+          course_id: this.courseId,
+          name: this.assessmentName // This is the assessment name (e.g., 'Quiz 1')
+        }
+      });
+    },
   },
 };
 </script>
@@ -226,8 +230,10 @@ export default {
 <style scoped>
 /* Main container for the content area */
 .student-records-detail {
-  padding: 20px 40px; /* Increased padding to match the dashboard content area style*/
-  background-color: #F8F5F1; /* Light background from dashboard content area*/
+  padding: 20px 40px;
+  /* Increased padding to match the dashboard content area style*/
+  background-color: #F8F5F1;
+  /* Light background from dashboard content area*/
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -237,185 +243,241 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #FFF9EB; /* Matches the background of the dashboard header*/
-  padding: 20px 30px; /* Adjusted padding to match the dashboard's header*/
-  border-radius: 10px; /* Rounded corners similar to dashboard elements*/
-  margin-bottom: 25px; /* Spacing below the header */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth, similar to dashboard elements*/
+  background-color: #FFF9EB;
+  /* Matches the background of the dashboard header*/
+  padding: 20px 30px;
+  /* Adjusted padding to match the dashboard's header*/
+  border-radius: 10px;
+  /* Rounded corners similar to dashboard elements*/
+  margin-bottom: 25px;
+  /* Spacing below the header */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  /* Subtle shadow for depth, similar to dashboard elements*/
 }
 
 .header h1 {
-  font-size: 32px; /* Font size from dashboard headers*/
-  color: #770F20; /* Dark red color from UTM branding/dashboard*/
+  font-size: 32px;
+  /* Font size from dashboard headers*/
+  color: #770F20;
+  /* Dark red color from UTM branding/dashboard*/
   margin: 0;
-  font-weight: 600; /* Slightly bolder font */
+  font-weight: 600;
+  /* Slightly bolder font */
 }
 
 /* Action Buttons (Edit, Add, Cancel) */
 .actions button {
-  background-color: #FFBF48; /* Orange color for buttons*/
+  background-color: #FFBF48;
+  /* Orange color for buttons*/
   padding: 10px 20px;
-  border-radius: 8px; /* Slightly more rounded buttons*/
+  border-radius: 8px;
+  /* Slightly more rounded buttons*/
   border: none;
   cursor: pointer;
-  color: #731329; /* Darker text color for contrast on orange*/
+  color: #731329;
+  /* Darker text color for contrast on orange*/
   font-weight: bold;
   margin-left: 10px;
   transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for buttons*/
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Subtle shadow for buttons*/
 }
 
 .actions button:hover {
-  background-color: #F0A643; /* Slightly darker orange on hover*/
-  transform: translateY(-1px); /* Slight lift on hover */
+  background-color: #F0A643;
+  /* Slightly darker orange on hover*/
+  transform: translateY(-1px);
+  /* Slight lift on hover */
 }
 
 .actions .cancel-btn {
-    background-color: #A3A3A3; /* A neutral color for cancel */
-    color: #FFFFFF;
+  background-color: #A3A3A3;
+  /* A neutral color for cancel */
+  color: #FFFFFF;
 }
 
 .actions .cancel-btn:hover {
-    background-color: #8C8C8C;
+  background-color: #8C8C8C;
 }
 
 
 /* Student Record Table Container */
 .student-record-table {
-  background-color: #FFFFFF; /* Pure white background for the table area*/
-  padding: 20px 30px; /* Padding inside the table container*/
-  border-radius: 10px; /* Rounded corners for the table container*/
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth*/
+  background-color: #FFFFFF;
+  /* Pure white background for the table area*/
+  padding: 20px 30px;
+  /* Padding inside the table container*/
+  border-radius: 10px;
+  /* Rounded corners for the table container*/
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  /* Subtle shadow for depth*/
 }
 
 /* Table Header Row */
 .table-header {
-  background-color: #F1EDE9; /* Light gray background for table header row*/
+  background-color: #F1EDE9;
+  /* Light gray background for table header row*/
   display: flex;
   font-weight: bold;
-  padding: 12px 0; /* Vertical padding for header cells */
-  border-bottom: 2px solid #D6D0C5; /* Slightly darker border below header*/
-  margin-bottom: 15px; /* Space between header and first data row */
-  border-radius: 8px; /* Rounded corners for the header row */
-  padding-left: 30px; /* Match internal padding of table container */
-  padding-right: 30px; /* Match internal padding of table container */
+  padding: 12px 0;
+  /* Vertical padding for header cells */
+  border-bottom: 2px solid #D6D0C5;
+  /* Slightly darker border below header*/
+  margin-bottom: 15px;
+  /* Space between header and first data row */
+  border-radius: 8px;
+  /* Rounded corners for the header row */
+  padding-left: 30px;
+  /* Match internal padding of table container */
+  padding-right: 30px;
+  /* Match internal padding of table container */
 }
 
 /* Column Sizing and Alignment */
 .column-name,
 .student-name {
-  flex: 2; /* Takes more flexible space */
-  min-width: 150px; /* Minimum width to prevent squishing */
+  flex: 2;
+  /* Takes more flexible space */
+  min-width: 150px;
+  /* Minimum width to prevent squishing */
   text-align: left;
 }
 
 .column-matric,
 .student-matric {
-  flex: 1.5; /* Takes medium flexible space */
-  min-width: 120px; /* Minimum width */
+  flex: 1.5;
+  /* Takes medium flexible space */
+  min-width: 120px;
+  /* Minimum width */
   text-align: left;
 }
 
 .column-mark,
 .student-mark {
-  flex: 0.5; /* Takes less flexible space */
-  min-width: 80px; /* Minimum width */
-  text-align: right; /* Right align for numerical data */
-  display: flex; /* Use flexbox for mark column to align input/text */
-  align-items: center; /* Vertically align items */
-  justify-content: flex-end; /* Align content to the right */
-  gap: 5px; /* Space between mark input/text and /weight */
+  flex: 0.5;
+  /* Takes less flexible space */
+  min-width: 80px;
+  /* Minimum width */
+  text-align: right;
+  /* Right align for numerical data */
+  display: flex;
+  /* Use flexbox for mark column to align input/text */
+  align-items: center;
+  /* Vertically align items */
+  justify-content: flex-end;
+  /* Align content to the right */
+  gap: 5px;
+  /* Space between mark input/text and /weight */
 }
 
 /* Individual Student Record Row */
 .student-record {
   display: flex;
-  padding: 12px 30px; /* Consistent padding for data rows*/
-  border-bottom: 1px solid #F1EDE9; /* Light border between rows*/
-  align-items: center; /* Vertically center content */
-  color: #333; /* Dark text color for readability*/
+  padding: 12px 30px;
+  /* Consistent padding for data rows*/
+  border-bottom: 1px solid #F1EDE9;
+  /* Light border between rows*/
+  align-items: center;
+  /* Vertically center content */
+  color: #333;
+  /* Dark text color for readability*/
 }
 
 .student-record:last-child {
-  border-bottom: none; /* Remove border from the last row */
+  border-bottom: none;
+  /* Remove border from the last row */
 }
 
 /* Font Sizes for table content */
-.student-name, .student-matric, .student-mark {
-  font-size: 17px; /* Consistent font size for table content*/
+.student-name,
+.student-matric,
+.student-mark {
+  font-size: 17px;
+  /* Consistent font size for table content*/
 }
 
 /* Specific styling for Mark */
 .student-mark {
   font-weight: bold;
-  color: #770F20; /* Dark red for marks to make them stand out*/
+  color: #770F20;
+  /* Dark red for marks to make them stand out*/
 }
 
 /* Input field for marks */
 .student-mark input[type="number"] {
-  width: 70px; /* Adjust width as needed */
+  width: 70px;
+  /* Adjust width as needed */
   padding: 5px 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 16px;
   text-align: right;
-  outline: none; /* Remove outline on focus */
+  outline: none;
+  /* Remove outline on focus */
 }
 
 .student-mark input[type="number"]:focus {
-  border-color: #FFBF48; /* Highlight on focus */
+  border-color: #FFBF48;
+  /* Highlight on focus */
   box-shadow: 0 0 0 2px rgba(255, 191, 72, 0.2);
 }
 
 .input-error {
-  border-color: #D32F2F !important; /* Red border for errors */
+  border-color: #D32F2F !important;
+  /* Red border for errors */
   box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2) !important;
 }
 
 
 /* Error Message Styling */
 .error-message {
-  color: #D32F2F; /* More distinct red for error messages*/
+  color: #D32F2F;
+  /* More distinct red for error messages*/
   font-size: 18px;
   margin-top: 20px;
-  margin-bottom: 20px; /* Added margin-bottom */
+  margin-bottom: 20px;
+  /* Added margin-bottom */
   font-weight: bold;
-  background-color: #FFEBEE; /* Light red background for error message*/
+  background-color: #FFEBEE;
+  /* Light red background for error message*/
   padding: 15px;
   border-radius: 8px;
-  border: 1px solid #EF9A9A; /* Red border for error message*/
+  border: 1px solid #EF9A9A;
+  /* Red border for error message*/
   text-align: center;
 }
 
 /* Update Button section */
 .update-section {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
 }
 
 .update-btn {
-    background-color: #4CAF50; /* Green for update button */
-    padding: 12px 25px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #4CAF50;
+  /* Green for update button */
+  padding: 12px 25px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .update-btn:hover {
-    background-color: #45a049;
-    transform: translateY(-1px);
+  background-color: #45a049;
+  transform: translateY(-1px);
 }
 
 /* Sidebar styling (Assuming it's a separate component but keeping for context) */
 .sidebar {
   width: 224px;
-  background-color: #7C192E; /* Dark red sidebar background from dashboard*/
+  background-color: #7C192E;
+  /* Dark red sidebar background from dashboard*/
   color: white;
   padding: 20px;
 }
@@ -434,7 +496,9 @@ export default {
 }
 
 .nav-links a.active-link {
-  background-color: #F5EFE9; /* Light background for active link*/
-  color: #333; /* Dark text for active link*/
+  background-color: #F5EFE9;
+  /* Light background for active link*/
+  color: #333;
+  /* Dark text for active link*/
 }
 </style>
