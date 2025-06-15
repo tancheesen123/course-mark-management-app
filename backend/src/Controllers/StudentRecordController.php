@@ -6,17 +6,21 @@ use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 use App\Services\StudentService;
 use App\Services\AssessmentService;
+use App\Services\CourseService;
+use PDO;
 use Exception;
 
 class StudentRecordController
 {
     private StudentService $studentService;
     private AssessmentService $assessmentService;
+    private CourseService $courseService;
 
-    public function __construct(StudentService $studentService, AssessmentService $assessmentService)
+    public function __construct(StudentService $studentService, AssessmentService $assessmentService, CourseService $courseService)
     {
         $this->studentService = $studentService;
         $this->assessmentService = $assessmentService;
+        $this->courseService = $courseService;
     }
 
     public function findStudentCourseMark(Request $request, Response $response, array $args): Response
@@ -157,5 +161,50 @@ class StudentRecordController
         }
     }
 
-    
+    public function getTotalCalculation(Request $request, Response $response, array $args): Response
+{
+    $data = json_decode($request->getBody()->getContents(), true);
+    $courseId = $data['course_id'] ?? null;
+
+    if (!$courseId) {
+        $response->getBody()->write(json_encode(['error' => 'Missing course_id']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+
+    }
+
+    try {
+        $result = $this->studentService->calculateTotalMarks((int)$courseId);
+        $response->getBody()->write(json_encode($result));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    } catch (\Exception $e) {
+        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+}
+
+public function getLecturerCourses(Request $request, Response $response, array $args): Response
+    {
+        $decoded = $request->getAttribute('jwt');
+        $lecturerId = $decoded->sub ?? null; // Access 'sub' from the decoded JWT payload
+
+        error_log("Decoded JWT: " . json_encode($decoded));
+
+        if (!$lecturerId) {
+            $response->getBody()->write(json_encode(['error' => 'Lecturer ID not found']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        try {
+            // Delegate to CourseService
+            $courses = $this->courseService->getLecturerCourses((int)$lecturerId);
+
+            $response->getBody()->write(json_encode($courses));
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            $response->getBody()->write(json_encode(['error' => 'Failed to fetch courses', 'details' => $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+
 }

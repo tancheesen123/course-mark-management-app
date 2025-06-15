@@ -234,4 +234,55 @@ class StudentRepository
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+public function getAssessmentsByCourseId(int $courseId): array
+{
+    try {
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("SELECT id, name, weight FROM assessment_component WHERE course_id = ?");
+        $stmt->execute([$courseId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching assessments: " . $e->getMessage());
+        throw $e;
+    }
+}
+
+public function getStudentsWithNamesEnrolledInCourse(int $courseId): array
+{
+    try {
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("
+            SELECT s.id, s.name, s.matric_number
+            FROM students s
+            JOIN enrollments e ON s.id = e.student_id
+            WHERE e.course_id = ?
+        ");
+        $stmt->execute([$courseId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching enrolled students with names: " . $e->getMessage());
+        throw $e;
+    }
+}
+
+
+public function getMarksByCourse(int $courseId): array
+{
+    try {
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("
+            SELECT sa.student_id, sa.assessment_id, sa.mark
+            FROM student_assessments sa
+            JOIN assessment_component ac ON sa.assessment_id = ac.id
+            WHERE ac.course_id = ?
+        ");
+        $stmt->execute([$courseId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching marks: " . $e->getMessage());
+        throw $e;
+    }
+}
+
+
 }

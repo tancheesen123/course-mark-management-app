@@ -23,4 +23,14 @@ class CourseService
             throw new \Exception("Failed to retrieve courses. Please try again later.");
         }
     }
+
+    public function getLecturerCourses(int $lecturerId): array
+    {
+        try {
+            return $this->courseRepository->getCoursesByLecturerId($lecturerId);
+        } catch (Exception $e) {
+            error_log("Error in CourseService getting lecturer courses: " . $e->getMessage());
+            throw $e; // Re-throw to be caught by the controller
+        }
+    }
 }

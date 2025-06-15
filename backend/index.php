@@ -54,7 +54,8 @@ $container->set(StudentController::class, fn($c) => new StudentController($c->ge
 $container->set(AssessmentController::class, fn($c) => new AssessmentController($c->get(AssessmentService::class)));
 $container->set(StudentRecordController::class, fn($c) => new StudentRecordController(
     $c->get(StudentService::class),
-    $c->get(AssessmentService::class)
+    $c->get(AssessmentService::class),
+    $c->get(CourseService::class)
 ));
 
 

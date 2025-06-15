@@ -76,10 +76,20 @@ export default {
         const assessmentData = await assessmentResponse.json();
 
         if (assessmentResponse.ok && assessmentData.assessment_component && assessmentData.assessment_component.length > 0) {
-          this.assessmentWeight = assessmentData.assessment_component[0].weight;
-          this.assessmentId = assessmentData.assessment_component[0].id;
+          // Find the correct assessment component by name
+          const currentAssessment = assessmentData.assessment_component.find(
+            a => a.name === this.assessmentName
+          );
+
+          if (currentAssessment) {
+            this.assessmentWeight = currentAssessment.weight;
+            this.assessmentId = currentAssessment.id;
+          } else {
+            this.errorMessage = `Assessment '${this.assessmentName}' not found for this course.`;
+            return;
+          }
         } else {
-          this.errorMessage = "Failed to load assessment details or assessment not found.";
+          this.errorMessage = "Failed to load assessment details or no assessment components found.";
           return;
         }
 
