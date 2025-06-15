@@ -27,30 +27,17 @@ class AdvisorService {
     }
 
     private function calculateTotalMark(array $assessments): float {
-        $continuous = 0;
-        $continuousMax = 0;
-        $final = 0;
-        $finalMax = 0;
+    $total = 0;
 
-        foreach ($assessments as $row) {
-            $mark = (float) $row['mark'];
-            $weight = (float) ($row['weight'] ?? $row['max_mark'] ?? 0);
-            $type = $row['type'];
-
-            if ($type === 'final') {
-                $final += $mark;
-                $finalMax += $weight;
-            } else {
-                $continuous += $mark;
-                $continuousMax += $weight;
-            }
-        }
-
-        $continuousPercent = $continuousMax > 0 ? ($continuous / $continuousMax) * 70 : 0;
-        $finalPercent = $finalMax > 0 ? ($final / $finalMax) * 30 : 0;
-
-        return round($continuousPercent + $finalPercent, 2);
+    foreach ($assessments as $row) {
+        $mark = (float) ($row['mark'] ?? 0);
+        $total += $mark;
     }
+
+    return round($total, 2);
+}
+
+
 
     private function calculateGPA(float $totalMark): float {
         if ($totalMark >= 90) return 4.00;
@@ -261,4 +248,7 @@ class AdvisorService {
         return $result;
     }
 
+    public function getAverageComponentStats($courseId): array {
+        return $this->repo->getAverageComponentMarks($courseId);
+    }
 }

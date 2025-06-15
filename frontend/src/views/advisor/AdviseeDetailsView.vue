@@ -32,17 +32,26 @@
           </tr>
         </tbody>
       </table>
+
+      <div class="chart-container" v-if="chartData">
+        <h2>Class Average per Component</h2>
+        <LineChart :chartData="chartData" />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import LineChart from "@/views/advisor/LineChart.vue";
+
 export default {
   name: "StudentDetail",
+  components: { LineChart },
   props: ["courseId", "studentId"],
 
   data() {
     return {
+      averageMarks: [],
       student: null,
       errorMessage: "",
       componentHeaders: [
@@ -56,12 +65,75 @@ export default {
       ],
     };
   },
+
+  computed: {
+    chartData() {
+      if (!this.student || !this.averageMarks.length) return null;
+
+      const categories = [
+        "Quiz",
+        "Lab",
+        "Exercise",
+        "Test",
+        "Assignment",
+        "Final",
+      ];
+
+      const studentData = categories.map((type) => {
+        const total = this.student.components
+          .filter((c) => c.name?.toLowerCase().startsWith(type.toLowerCase()))
+          .reduce((sum, c) => sum + (parseFloat(c.mark) || 0), 0);
+        return Math.round(total * 100) / 100;
+      });
+
+      const averageData = categories.map((type) => {
+        const match = this.averageMarks.find((avg) =>
+          avg.name?.toLowerCase().startsWith(type.toLowerCase())
+        );
+        return match ? Math.round(match.average_mark * 100) / 100 : 0;
+      });
+
+      return {
+        labels: categories,
+        datasets: [
+          {
+            label: "Advisee's Marks",
+            data: studentData,
+            borderColor: "#7c192f",
+            backgroundColor: "#7c192f",
+          },
+          {
+            label: "Average Marks",
+            data: averageData,
+            borderColor: "#ccc",
+            backgroundColor: "#ccc",
+          },
+        ],
+      };
+    },
+  },
+
   methods: {
+    async fetchAverageMarks() {
+      try {
+        const res = await fetch(
+          `http://localhost:8085/api/public/advisor/courses/${this.courseId}/average-marks`
+        );
+        const data = await res.json();
+        if (res.ok && data.success) {
+          this.averageMarks = data.averages;
+        }
+      } catch (err) {
+        console.error("Error fetching averages", err);
+      }
+    },
+
     async fetchStudentDetails() {
       try {
         const res = await fetch(
           `http://localhost:8085/api/public/advisor/courses/${this.courseId}/students/${this.studentId}/details`
         );
+
         const data = await res.json();
 
         if (res.ok && data.success) {
@@ -74,13 +146,28 @@ export default {
         this.errorMessage = "Error loading student details.";
       }
     },
+
     getMark(name) {
-      const component = this.student?.components?.find((c) => c.name === name);
-      return component ? component.mark : "-";
+      if (!this.student || !Array.isArray(this.student.components)) return "-";
+
+      const filtered = this.student.components.filter((c) => {
+        return c.name?.toLowerCase().startsWith(name.toLowerCase());
+      });
+
+      if (!filtered.length) return "-";
+
+      const total = filtered.reduce((sum, comp) => {
+        const mark = parseFloat(comp.mark);
+        return sum + (isNaN(mark) ? 0 : mark);
+      }, 0);
+
+      return Math.round(total * 100) / 100;
     },
+
     getRiskClass(risk) {
       return risk === "High" ? "high-risk" : "low-risk";
     },
+
     goBack() {
       if (window.history.length > 1) {
         this.$router.back();
@@ -89,8 +176,10 @@ export default {
       }
     },
   },
+
   mounted() {
     this.fetchStudentDetails();
+    this.fetchAverageMarks();
   },
 };
 </script>
@@ -123,66 +212,66 @@ export default {
 .detail-body {
   padding: 0 40px;
 }
-
 h2 {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
   font-size: 25px;
   color: #000;
 }
-
 .low-risk {
   background: green;
   color: white;
   padding: 8px 20px;
   border-radius: 50px;
 }
-
 .high-risk {
   background: red;
   color: white;
   padding: 8px 20px;
   border-radius: 50px;
 }
-
 .mark-table {
-  margin-top: 50px;
+  margin: 30px auto 50px auto;
   border-collapse: collapse;
   width: 100%;
   background: white;
   border-radius: 8px;
   overflow: hidden;
 }
-
 .mark-table th,
 .mark-table td {
   border: 1px solid #ddd;
   padding: 12px;
   text-align: center;
 }
-
 .mark-table th {
   background-color: #f5efe9;
 }
-
 .error-msg {
   color: red;
   margin-top: 20px;
   padding-left: 40px;
 }
-
 .back-btn {
   margin: 0 0 0 40px;
-  background-color: #7c192f;
-  color: white;
+  background-color: #f4c04e;
+  color: #7c192f;
   border: none;
   padding: 8px 25px;
   border-radius: 15px;
   cursor: pointer;
   font-size: 16px;
+  font-weight: bold;
 }
 .back-btn:hover {
-  background-color: #5e1223;
+  background-color: #dcaa3f;
+}
+.chart-container {
+  margin-top: 40px;
+  width: 85%;
+}
+.chart-container h2 {
+  color: #7c192f;
 }
 </style>

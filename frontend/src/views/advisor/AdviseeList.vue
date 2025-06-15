@@ -5,14 +5,26 @@
       <h1>Advisee List</h1>
     </div>
 
-    <div class="search-filter">
-      <input type="text" v-model="searchQuery" placeholder="Search Advisees" />
-      <select v-model="selectedSemester">
-        <option v-for="s in semesters" :key="s" :value="s">{{ s }}</option>
-      </select>
+    <div class="top-controls">
+      <div class="search-filter">
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search Advisees"
+        />
+        <!-- <select v-model="selectedSemester">
+          <option v-for="s in semesters" :key="s" :value="s">{{ s }}</option>
+        </select> -->
+      </div>
+      <div class="export-section">
+        <button class="export-btn" @click="exportToExcel" :disabled="exporting">
+          {{ exporting ? "Exporting..." : "Export CSV" }}
+        </button>
+        <div class="success-wrapper" v-if="exportSuccess">
+          ✔ Export successful!
+        </div>
+      </div>
     </div>
-
-    <div v-if="errorMessage" class="error-msg">{{ errorMessage }}</div>
 
     <table class="advisee-table" v-if="filteredAdvisees.length">
       <thead>
@@ -44,6 +56,8 @@
 </template>
 
 <script>
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 export default {
   name: "AdviseeList",
   props: ["courseId"],
@@ -52,8 +66,10 @@ export default {
       advisees: [],
       searchQuery: "",
       errorMessage: "",
-      semesters: ["20242025/1", "20232024/2", "20222023/2"],
-      selectedSemester: "20242025/1",
+      // semesters: ["20242025/1", "20232024/2", "20222023/2"],
+      // selectedSemester: "20242025/1",
+      exporting: false,
+      exportSuccess: false,
     };
   },
   computed: {
@@ -136,6 +152,83 @@ export default {
         this.$router.push("/advisorMenu/dashboard");
       }
     },
+
+    async exportToExcel() {
+      this.exporting = true;
+      this.exportSuccess = false;
+
+      const courseId =
+        this.courseId ||
+        this.$route.params.courseId ||
+        this.$route.query.course_id;
+      const exportData = [];
+      let courseName = "";
+
+      for (const advisee of this.advisees) {
+        try {
+          const res = await fetch(
+            `http://localhost:8085/api/public/advisor/courses/${courseId}/students/${advisee.student_id}/details`
+          );
+          const detail = await res.json();
+
+          if (res.ok && detail.success) {
+            const d = detail.details;
+
+            if (!courseName && d.course_name) {
+              courseName = d.course_name.replace(/\s+/g, "_");
+            }
+
+            const row = {
+              Name: d.name,
+              "Matric Number": d.matric_number,
+              Email: d.email,
+              "Course Name": d.course_name,
+              GPA: d.gpa,
+              Risk: d.risk,
+            };
+
+            d.components.forEach((comp) => {
+              const mark = parseFloat(comp.mark);
+              if (!isNaN(mark)) {
+                row[comp.name] = mark;
+              }
+            });
+
+            row["Total"] = Math.round(d.total_mark * 100) / 100;
+
+            row["Total"] = Math.round(d.total_mark * 100) / 100;
+
+            exportData.push(row);
+          }
+        } catch (err) {
+          console.error(`Error loading detail for ${advisee.name}`, err);
+        }
+      }
+
+      if (!exportData.length) {
+        this.exporting = false;
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Advisee Details");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      const blob = new Blob([excelBuffer], {
+        type: "application/octet-stream",
+      });
+
+      const fileName = `Advisee_Details_${courseName || courseId}.xlsx`;
+      saveAs(blob, fileName);
+
+      this.exporting = false;
+      this.exportSuccess = true;
+      setTimeout(() => (this.exportSuccess = false), 3000);
+    },
   },
   mounted() {
     this.fetchAdvisees();
@@ -172,8 +265,7 @@ export default {
 .search-filter {
   display: flex;
   gap: 20px;
-  margin: 20px 0;
-  padding-left: 40px;
+  margin: 0;
 }
 
 input,
@@ -181,11 +273,12 @@ select {
   padding: 10px;
   border-radius: 15px;
   border: 1px solid #ccc;
+  width: 500px;
 }
 
 .advisee-table {
-  width: 100%;
-  margin-top: 20px;
+  width: 95%;
+  margin: 20px auto 0 auto;
   border-collapse: collapse;
   background: white;
   border-radius: 10px;
@@ -234,15 +327,53 @@ th {
 
 .back-btn {
   margin: 0 0 0 40px;
-  background-color: #7c192f;
-  color: white;
+  background-color: #f4c04e;
+  color: #7c192f;
   border: none;
   padding: 8px 25px;
   border-radius: 15px;
   cursor: pointer;
   font-size: 16px;
+  font-weight: bold;
 }
 .back-btn:hover {
-  background-color: #5e1223;
+  background-color: #dcaa3f;
+}
+
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  margin: 20px 0;
+}
+
+.export-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 10px 40px 0 auto;
+}
+
+.export-btn {
+  background-color: #f4c04e;
+  color: #7c192f;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.export-btn:hover {
+  background-color: #dcaa3f;
+}
+
+.success-wrapper {
+  margin-top: 6px;
+  color: green;
+  font-weight: bold;
+  font-size: 14px;
 }
 </style>

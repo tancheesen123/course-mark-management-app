@@ -210,4 +210,16 @@ $app->get('/api/advisor/course-wise-stats/{advisor_id}', function ($request, $re
     return $response->withHeader('Content-Type', 'application/json');
 });
 
+$app->get('/api/public/advisor/courses/{course_id}/average-marks', function ($request, $response, $args) {
+    $courseId = $args['course_id'];
+    $service = new AdvisorService();
+    $averages = $service->getAverageComponentStats($courseId);
+    $response->getBody()->write(json_encode([
+        'success' => true,
+        'averages' => $averages
+    ]));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+
 $app->run();

@@ -220,14 +220,16 @@ export default {
 
 /* Chart Section */
 .chart-section {
-  width: 90%;
-  margin-top: 50px;
+  width: 100%;
+  max-width: 1100px; /* 控制最大宽度 */
+  margin: 50px; /* 居中 */
   padding: 30px 40px;
-  margin-left: 35px;
   background-color: #f5efe9;
   border-radius: 16px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
 }
+
 .chart-section h2 {
   font-size: 24px;
   margin-bottom: 20px;

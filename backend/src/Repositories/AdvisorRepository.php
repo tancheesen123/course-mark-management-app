@@ -19,10 +19,11 @@ class AdvisorRepository {
     public function getStudentMarks($studentId, $courseId) {
         $pdo = getPDO();
         $stmt = $pdo->prepare("
-            SELECT sa.mark, ac.weight, ac.type
-            FROM student_assessments sa
-            JOIN assessment_component ac ON sa.assessment_id = ac.id
-            WHERE sa.student_id = ? AND ac.course_id = ?
+            SELECT sa.mark, ac.weight, ac.type, ac.name
+FROM student_assessments sa
+JOIN assessment_component ac ON sa.assessment_id = ac.id
+WHERE sa.student_id = ? AND ac.course_id = ?
+
         ");
 
         $stmt->execute([$studentId, $courseId]);
@@ -173,6 +174,20 @@ class AdvisorRepository {
             WHERE a.advisor_user_id = ?
         ");
         $stmt->execute([$advisorUserId]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function getAverageComponentMarks($courseId): array {
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("
+            SELECT ac.name, ac.type, AVG(sa.mark) AS average_mark
+            FROM assessment_component ac
+            LEFT JOIN student_assessments sa ON ac.id = sa.assessment_id
+            WHERE ac.course_id = ?
+            GROUP BY ac.name, ac.type
+            ORDER BY ac.type, ac.name
+        ");
+        $stmt->execute([$courseId]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 }
