@@ -38,6 +38,7 @@ return function (App $app) {
         $group->post('/studentCourseMark', [StudentRecordController::class, 'findStudentCourseMark']);
         $group->post('/total-calculation', [StudentRecordController::class, 'getTotalCalculation']);
         $group->get('/lecturer-courses',[StudentRecordController::class, 'getLecturerCourses']);
+        $group->post('/exportCSV/{row}',[StudentRecordController::class, 'exportToCsv']);
         
         // ADVISOR PART
         $group->group('/advisor', function ($advisorGroup) {

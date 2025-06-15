@@ -173,4 +173,60 @@ class AssessmentService
     }
 }
 
+    public function generateCsv(array $course): string
+    {
+        $output = fopen('php://temp', 'r+');
+
+        // Add course info
+        fputcsv($output, ['Course Code:', $course['course_code']]);
+        fputcsv($output, ['Course Name:', $course['course_name']]);
+        fputcsv($output, []); // blank line
+
+        // Header
+        $headers = ['Name', 'Matric Number'];
+        foreach ($course['assessments'] as $a) {
+            $headers[] = "{$a['name']} ({$a['weight']}%)";
+        }
+        $headers[] = "Total";
+        $headers[] = "Grade";
+        fputcsv($output, $headers);
+
+        // Data rows
+        foreach ($course['students'] as $student) {
+            $row = [$student['name'], $student['matric_number']];
+            $total = 0;
+            foreach ($course['assessments'] as $a) {
+                $mark = $student['marks'][$a['id']] ?? 0;
+                $total += $mark;
+                $row[] = $mark;
+            }
+            $row[] = number_format($total, 1);
+            $row[] = $this->calculateGrade($total);
+            fputcsv($output, $row);
+        }
+
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+
+        return $csv;
+    }
+
+    private function calculateGrade($total): string
+    {
+        if ($total >= 90) return "A+";
+        if ($total >= 80) return "A";
+        if ($total >= 75) return "A-";
+        if ($total >= 70) return "B+";
+        if ($total >= 65) return "B";
+        if ($total >= 60) return "B-";
+        if ($total >= 55) return "C+";
+        if ($total >= 50) return "C";
+        if ($total >= 45) return "C-";
+        if ($total >= 40) return "D+";
+        if ($total >= 35) return "D";
+        if ($total >= 30) return "D-";
+        return "E";
+    }
+
 }

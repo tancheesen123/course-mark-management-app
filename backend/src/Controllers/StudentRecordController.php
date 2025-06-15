@@ -182,7 +182,7 @@ class StudentRecordController
     }
 }
 
-public function getLecturerCourses(Request $request, Response $response, array $args): Response
+    public function getLecturerCourses(Request $request, Response $response, array $args): Response
     {
         $decoded = $request->getAttribute('jwt');
         $lecturerId = $decoded->sub ?? null; // Access 'sub' from the decoded JWT payload
@@ -206,5 +206,26 @@ public function getLecturerCourses(Request $request, Response $response, array $
         }
     }
 
+    public function exportToCsv(Request $request, Response $response, $args): Response
+    {
+        $body = $request->getParsedBody();
+        $rowParam = $args['row'];
+        //print body content 
+        // error_log("Request Body: " . json_encode($body));
+        if (!$body || !isset($body[$rowParam])) {
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json')
+                ->write(json_encode(['error' => 'Invalid request body or row index']));
+        }
 
+        $course = $body[$rowParam];
+        $filename = "{$course['course_code']}_section_{$course['section']}_marks.csv";
+
+        $csv = $this->assessmentService->generateCsv($course);
+
+        $response->getBody()->write($csv);
+        return $response
+            ->withHeader('Content-Type', 'text/csv')
+            ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
 }
+

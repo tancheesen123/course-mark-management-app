@@ -118,9 +118,11 @@ export default {
           },
           body: JSON.stringify({ course_id: this.courseId, student_id }),
         });
+        console.log("course_id:", this.courseId);
+        console.log("student_id:", student_id);
         const data = await response.json();
         if (response.ok) {
-            console.log("Data fetched successfully:", data);
+        console.log("Data fetched successfully:", data);
           this.accessments = data.assessments;
           this.totalMarks = data.total_marks || 0;
           this.finalExamMarks = data.final_exam_marks;
