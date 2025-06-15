@@ -1,7 +1,7 @@
 <template>
   <div class="student-records-detail">
     <div class="header">
-      <h1>Course Accessment - {{ assessmentName }}</h1>
+      <h1>Course Accessment - {{ courseName }}</h1>
       <!-- <div class="actions">
         <button v-if="!isEditing" class="edit-btn" @click="toggleEditMode">Edit</button>
         <button v-else class="cancel-btn" @click="cancelEdit">Cancel</button>
@@ -82,7 +82,7 @@ export default {
   data() {
     return {
       courseId: this.$route.query.course_id,
-      assessmentName: this.$route.query.name,
+      courseName: this.$route.query.course_name,
       students: [],
       accessments: [],
       finalExamAssessment: {},

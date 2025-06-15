@@ -13,7 +13,7 @@
           v-for="course in courses"
           :key="course.course_id"
           class="course-card"
-          @click="goToCourse(course.course_id)"
+          @click="goToCourse(course.course_id,course.course_name)"
         >
           <p>{{ course.course_code }} - {{ course.course_name }}</p>
         </div>
@@ -61,8 +61,8 @@ export default {
     }
   },
   methods: {
-    goToCourse(courseId) {
-       this.$router.push({ path: '/StudentMenu/studentCourse/mark', query: { course_id: courseId } });
+    goToCourse(courseId, courseName) {
+       this.$router.push({ path: '/StudentMenu/studentCourse/mark', query: { course_id: courseId, course_name: courseName } });
     },
   },
 };
