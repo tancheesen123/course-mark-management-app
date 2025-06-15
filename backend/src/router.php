@@ -34,11 +34,14 @@ return function (App $app) {
         $group->put('/assessments/{id}', [AssessmentController::class, 'updateAssessment']);
         $group->patch('/assessments/{id}', [AssessmentController::class, 'updateAssessment']);
         $group->delete('/assessments/{id}', [AssessmentController::class, 'deleteAssessment']);
+        $group->get('/assessments/total-weight/{course_id}', [AssessmentController::class, 'getTotalWeight']);
 
         // Student Record / Marks Routes
         $group->get('/student-records', [StudentRecordController::class, 'getStudentRecords']);
         $group->patch('/student-marks/batch-update', [StudentRecordController::class, 'batchUpdateStudentMarks']);
         $group->post('/student-records/add', [StudentRecordController::class, 'addStudentRecord']);
+        $group->get('/available-students', [StudentController::class, 'getAvailableStudents']);
+
     })->add(new JwtMiddleware());
 
 

@@ -91,4 +91,28 @@ class AssessmentController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
+
+    public function getTotalWeight(Request $request, Response $response, array $args): Response
+    {
+        $queryParams = $request->getQueryParams();
+        $courseId = (int)$args['course_id'];
+        $type = $queryParams['type'] ?? null; // Get 'type' from query parameters
+
+        if (!$type) {
+            $response->getBody()->write(json_encode(['error' => 'Missing assessment type.']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        try {
+            $totalWeight = $this->assessmentService->getTotalWeight($courseId, $type);
+            $response->getBody()->write(json_encode(['total_weight' => $totalWeight]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode([
+                "error" => "Failed to retrieve total assessment weight",
+                "details" => $e->getMessage()
+            ]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

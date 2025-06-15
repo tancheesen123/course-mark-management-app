@@ -6,6 +6,7 @@
         <button v-if="!isEditing" class="edit-btn" @click="toggleEditMode">Edit</button>
         <button v-else class="cancel-btn" @click="cancelEdit">Cancel</button>
         <button class="add-btn" @click="addStudentRecord">Add</button>
+        <button class="back-btn" @click="goBack">Back</button>
       </div>
     </div>
 
@@ -222,6 +223,9 @@ export default {
           name: this.assessmentName // This is the assessment name (e.g., 'Quiz 1')
         }
       });
+    },
+    goBack() {
+      this.$router.go(-1); // Go back to the previous page
     },
   },
 };

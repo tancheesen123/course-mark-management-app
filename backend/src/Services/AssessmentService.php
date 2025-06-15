@@ -33,66 +33,86 @@ class AssessmentService
     public function createAssessment(array $data): array
     {
         if (empty($data['course_id']) || empty($data['name']) || empty($data['type']) || empty($data['weight'])) {
-            throw new \InvalidArgumentException('Missing required fields for assessment creation.');
+            throw new InvalidArgumentException('Missing required fields for assessment creation.');
         }
 
+        $courseId = (int)$data['course_id'];
+        $name = $data['name'];
+        $weight = (int)$data['weight'];
+        $type = $data['type'];
+
         try {
+            // Check for existing assessment with the same name for the course
+            $existingAssessment = $this->assessmentRepository->getAssessmentByCourseIdAndName($courseId, $name);
+            if ($existingAssessment) {
+                throw new InvalidArgumentException('An assessment with this name already exists for this course.', 409); // 409 Conflict
+            }
+
+            // Validate weight before creating the assessment
+            $this->validateAssessmentWeight($courseId, $type, $weight);
+
             // Start a transaction if multiple operations need to be atomic
             $this->pdo->beginTransaction();
 
-            $assessmentId = $this->assessmentRepository->createAssessment(
-                $data['course_id'],
-                $data['name'],
-                $data['weight'],
-                $data['type']
-            );
+            $assessmentId = $this->assessmentRepository->createAssessment($courseId, $name, $weight, $type);
 
-            // Now, insert the record into the student_assessments table for each student in the course
-            $students = $this->studentRepository->getStudentsEnrolledInCourse($data['course_id']);
-
-            if (empty($students)) {
-                error_log("No students found for course_id: " . $data['course_id'] . " when creating assessment.");
-            }
-
-            foreach ($students as $student) {
-                $this->studentRepository->initializeStudentAssessment($student['id'], $assessmentId, 0);
+            // Fetch all students enrolled in the course and initialize their marks for this new assessment
+            $studentsInCourse = $this->studentRepository->getStudentsEnrolledInCourse($courseId);
+            foreach ($studentsInCourse as $student) {
+                $this->studentRepository->initializeStudentAssessment($student['id'], $assessmentId, 0); // Initialize with 0 marks
             }
 
             $this->pdo->commit();
 
-            return ['message' => 'Assessment and student records created successfully.'];
+            return ['id' => $assessmentId, 'message' => 'Assessment created successfully and student records initialized.'];
         } catch (PDOException $e) {
             $this->pdo->rollBack();
             error_log("Service Error: Failed to create assessment - " . $e->getMessage());
-            throw new \Exception("Failed to create assessment. " . $e->getMessage());
-        } catch (\InvalidArgumentException $e) {
-            $this->pdo->rollBack();
-            throw $e;
-        } catch (\Exception $e) {
-            $this->pdo->rollBack();
-            error_log("Service Error: " . $e->getMessage());
-            throw new \Exception("An unexpected error occurred: " . $e->getMessage());
+            throw new Exception("Failed to create assessment. " . $e->getMessage());
         }
     }
 
     public function updateAssessment(int $id, array $data): bool
     {
         if (empty($data['name']) || empty($data['weight']) || empty($data['type'])) {
-            throw new \InvalidArgumentException('Missing required fields for assessment update.');
+            throw new InvalidArgumentException('Missing required fields for assessment update.');
         }
 
+        $name = $data['name'];
+        $weight = (int)$data['weight'];
+        $type = $data['type'];
+
         try {
+            // Get current assessment details to use its course_id for weight validation
+            $currentAssessment = $this->assessmentRepository->getAssessmentById($id);
+            if (!$currentAssessment) {
+                throw new InvalidArgumentException("Assessment with ID {$id} not found.", 404);
+            }
+            $courseId = (int)$currentAssessment['course_id'];
+
+            // Check for existing assessment with the same name for the course, excluding the current one
+            $existingAssessmentByName = $this->assessmentRepository->getAssessmentByCourseIdAndName($courseId, $name);
+            if ($existingAssessmentByName && $existingAssessmentByName['id'] !== $id) {
+                throw new InvalidArgumentException('An assessment with this name already exists for this course.', 409); // 409 Conflict
+            }
+
+            // Validate weight before updating the assessment
+            $this->validateAssessmentWeight($courseId, $type, $weight, $id);
+
+
             return $this->assessmentRepository->updateAssessment(
                 $id,
-                $data['name'],
-                $data['weight'],
-                $data['type']
+                $name,
+                $weight,
+                $type
             );
         } catch (PDOException $e) {
             error_log("Service Error: Failed to update assessment - " . $e->getMessage());
-            throw new \Exception("Failed to update assessment. Please try again later.");
+            throw new Exception("Failed to update assessment. Please try again later.");
         }
     }
+
+
 
     public function deleteAssessment(int $id): bool
     {
@@ -115,4 +135,30 @@ class AssessmentService
             throw new \Exception("Failed to delete assessment. " . $e->getMessage());
         }
     }
+
+    public function getTotalWeight(int $courseId, string $type, ?int $excludeAssessmentId = null): int
+    {
+        try {
+            return $this->assessmentRepository->getTotalWeight($courseId, $type, $excludeAssessmentId);
+        } catch (PDOException $e) {
+            error_log("Service Error: Failed to retrieve total assessment weight - " . $e->getMessage());
+            throw new \Exception("Failed to retrieve total assessment weight. Please try again later.");
+        }
+    }
+
+    private function validateAssessmentWeight(int $courseId, string $type, int $newWeight, ?int $excludeAssessmentId = null): void
+{
+    $isFinal = strtolower($type) === 'final';
+
+    $currentTotalWeight = $this->assessmentRepository->getTotalWeight($courseId, $type, $excludeAssessmentId);
+    $newOverallTotalWeight = $currentTotalWeight + $newWeight;
+
+    $maxAllowed = $isFinal ? 30 : 70;
+
+    if ($newOverallTotalWeight > $maxAllowed) {
+        $label = $isFinal ? "Final Exam" : "Coursework";
+        throw new \InvalidArgumentException("{$label} weight cannot exceed {$maxAllowed}%.");
+    }
+}
+
 }

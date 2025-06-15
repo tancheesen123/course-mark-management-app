@@ -93,4 +93,31 @@ class AssessmentRepository
             throw $e;
         }
     }
+
+   public function getTotalWeight(int $courseId, ?string $type = null, ?int $excludeAssessmentId = null): int {
+    try {
+        $pdo = getPDO();
+        $params = [$courseId];
+        $sql = "SELECT SUM(weight) FROM assessment_component WHERE course_id = ?";
+
+        if ($type === 'final') {
+            $sql .= " AND type = 'final'";
+        } else {
+            $sql .= " AND type != 'final'";
+        }
+
+        if ($excludeAssessmentId !== null) {
+            $sql .= " AND id != ?";
+            $params[] = $excludeAssessmentId;
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    } catch(PDOException $e) {
+        error_log("Error fetching total weight: " . $e->getMessage());
+        throw $e;
+    }
+}
+
 }

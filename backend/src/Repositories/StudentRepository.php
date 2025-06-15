@@ -191,4 +191,24 @@ class StudentRepository
             throw $e;
         }
     }
+
+    public function getStudentsNotInCourse(int $courseId): array
+{
+    $pdo = getPDO();
+    $stmt = $pdo->prepare("
+        SELECT s.id, s.name, s.matric_number
+        FROM students s
+        JOIN user u ON s.user_id = u.user_id
+        WHERE u.role = 2
+          AND s.id NOT IN (
+              SELECT e.student_id
+              FROM enrollments e
+              WHERE e.course_id = ?
+          )
+        ORDER BY s.name
+    ");
+    $stmt->execute([$courseId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 }

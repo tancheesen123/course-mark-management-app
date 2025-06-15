@@ -1,7 +1,10 @@
 <template>
   <div class="content">
     <div class="title-cover">
-      <h1>Manage Student Records - Assessments</h1>
+      <div class="header-content">
+        <h1>Manage Student Records - Assessments</h1>
+        <button class="back-btn" @click="goBack">Back</button>
+      </div>
     </div>
 
     <p class="subtitle">Select one of the assessments to key in students' marks</p>
@@ -67,6 +70,9 @@ export default {
     getIcon(type) {
       return require(`@/assets/icons/${type}-icon.png`);
     },
+    goBack() {
+      this.$router.go(-1); // Go back to the previous page
+    },
   },
 };
 </script>
@@ -101,8 +107,9 @@ export default {
 }
 
 .assessment-cards {
-  display: flex;
-  gap: 40px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   padding: 40px;
 }
 
@@ -131,5 +138,31 @@ export default {
 .type-icon {
   width: 91px;
   height: 101px;
+}
+
+.back-btn {
+  background-color: #FFBF48;
+  padding: 15px 25px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  color: #731329;
+  font-weight: bold;
+  font-size: 20px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-btn:hover {
+  background-color: #F0A643;
+  transform: translateY(-1px);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%; /* Make sure content takes full width of title-cover padding */
+    padding-right: 40px;
 }
 </style>

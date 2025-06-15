@@ -14,7 +14,10 @@
         <form @submit.prevent="saveRecord">
           <div class="input-group">
             <label for="studentName">Name<span class="required">*</span></label>
-            <input type="text" id="studentName" v-model="newRecord.name" required>
+            <select id="studentName" v-model="selectedStudentId" @change="onStudentSelected" required>
+              <option disabled value="">Select Student</option>
+              <option v-for="student in availableStudents" :key="student.id" :value="student.id">{{ student.name }}</option>
+            </select>
           </div>
 
           <div class="input-group">
@@ -58,6 +61,9 @@ export default {
       courseId: this.$route.query.course_id,
       assessmentName: this.$route.query.name,
       assessmentWeight: null,
+      selectedStudentId: '',
+      availableStudents: [],
+      studentMap: {},
       newRecord: {
         name: '',
         matric_number: '',
@@ -70,8 +76,30 @@ export default {
   },
   async mounted() {
     await this.fetchAssessmentWeight();
+    await this.fetchAvailableStudents();
   },
   methods: {
+     async fetchAvailableStudents() {
+    const token = localStorage.getItem("authToken");
+    try {
+      const res = await fetch(`http://localhost:8085/api/available-students?course_id=${this.courseId}&assessment_name=${encodeURIComponent(this.assessmentName)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      this.availableStudents = data.students;
+      this.studentMap = Object.fromEntries(data.students.map(s => [s.id, s]));
+    } catch (e) {
+      console.error("Failed to load students", e);
+      this.errorMessage = "Unable to fetch eligible students.";
+    }
+  },
+  onStudentSelected() {
+    const selected = this.studentMap[this.selectedStudentId];
+    if (selected) {
+      this.newRecord.name = selected.name;
+      this.newRecord.matric_number = selected.matric_number;
+    }
+  },
     async fetchAssessmentWeight() {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -373,6 +401,29 @@ export default {
 .save-btn:hover {
   background: #F0A643;
   transform: translateY(-1px);
+}
+
+/* Add this to your style scoped section */
+.input-group select {
+  width: 100%;
+  padding: 12px 15px; /* Consistent padding */
+  border: 1px solid rgba(0, 0, 0, 0.26);
+  border-radius: 5px;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px; /* Consistent font size */
+  color: #000000;
+  box-sizing: border-box; /* Include padding in width */
+  background-color: #FFFFFF; /* Ensure background is white */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%00-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4-3.6%203.6-5.4%207.9-5.4%2012.8v200.8c0%205%201.8%209.3%205.4%2012.9%203.6%203.6%207.9%205.4%2012.8%205.4h255.2c5%200%209.3-1.8%2012.9-5.4%203.6-3.6%205.4-7.9%205.4-12.8V82.2c0-5-1.8-9.3-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Custom dropdown arrow */
+  background-repeat: no-repeat;
+  background-position: right 15px top 50%;
+  background-size: 10px auto; /* Size of the custom arrow */
+}
+
+.input-group select:focus {
+  outline: none;
+  border-color: #FFBF48; /* Highlight on focus */
+  box-shadow: 0 0 0 2px rgba(255, 191, 72, 0.2);
 }
 
 </style>

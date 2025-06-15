@@ -107,7 +107,11 @@ class StudentService
             $pdo->beginTransaction();
 
             $student = $this->studentRepository->getStudentByMatricNumber($matricNumber);
-            $studentId = $student['id'] ?? $this->studentRepository->createStudent($name, $matricNumber);
+            $student = $this->studentRepository->getStudentByMatricNumber($matricNumber);
+            if (!$student) {
+                throw new \RuntimeException("Student not found in the system.", 404);
+            }
+            $studentId = $student['id'];
 
             if ($student && $this->studentRepository->hasStudentAssessmentRecord($studentId, $courseId, $assessmentName)) {
                 throw new \RuntimeException('A record for this student in this assessment already exists. Use the "Edit" function to change marks.', 409);
@@ -148,4 +152,10 @@ class StudentService
             throw $e;
         }
     }
+    public function getEligibleStudents(int $courseId): array
+{
+    return $this->studentRepository->getStudentsNotInCourse($courseId);
+}
+
+
 }

@@ -10,13 +10,22 @@
       <button @click="toggleForm">+ Add Assessment</button>
     </div>
 
+    <div v-if="form.course_id && showForm" class="form-group total-weight-display">
+      <p>Total Weight for {{ form.type === 'final' ? 'Final Exam' : 'Coursework' }} for this Course:
+        <strong>{{ totalWeightForSelectedCourse }}%</strong></p>
+    </div>
+
+    <div v-if="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
     <!-- Add/Edit Form -->
     <div v-show="showForm" class="add-assessment-form">
       <div class="form-card">
         <div class="form-row">
           <div class="form-group">
             <label>Course</label>
-            <select v-model="form.course_id">
+            <select v-model="form.course_id" @change="fetchTotalWeight(form.course_id, form.type)">
               <option disabled value="">Select Course</option>
               <option v-for="course in courses" :key="course.id" :value="course.course_id">
                 {{ course.course_code }} - {{ course.course_name }}
@@ -33,7 +42,7 @@
         <div class="form-row">
           <div class="form-group">
             <label>Assessment Type</label>
-            <select v-model="form.type">
+            <select v-model="form.type" @change="fetchTotalWeight(form.course_id, form.type)">
               <option disabled value="">Select Type</option>
               <option value="quiz">Quiz</option>
               <option value="assignment">Assignment</option>
@@ -46,7 +55,7 @@
 
           <div class="form-group">
             <label>Weight (%)</label>
-            <input v-model.number="form.weight" type="number" />
+            <input v-model.number="form.weight" type="number" min="0" max="100"/>
           </div>
         </div>
 
@@ -94,6 +103,7 @@
 
 
 <script>
+import axios from 'axios';
 export default {
   data() {
     return {
@@ -110,6 +120,9 @@ export default {
         type: '',
         weight: null,
       },
+      totalWeightForSelectedCourse: 0,
+      errorMessage: '',
+      assessmentToDeleteId: null
     };
   },
   async mounted() { // Changed to async to use await for cleaner token retrieval
@@ -156,6 +169,7 @@ export default {
       this.showForm = !this.showForm;
       if (!this.showForm) {
         this.resetForm();
+        this.totalWeightForSelectedCourse = 0;
       }
     },
     resetForm() {
@@ -202,6 +216,7 @@ export default {
           // Successfully added
           // Re-fetch assessments for the specific course to update the UI
           await this.fetchAssessmentsForCourse(this.form.course_id, token); // Re-fetch with token
+          await this.fetchTotalWeight(this.form.course_id, this.form.type); 
           alert('Successfully save the assessment');
           this.toggleForm();
         } else {
@@ -209,7 +224,7 @@ export default {
         }
       } catch (error) {
         console.error('Error saving assessment: ', error);
-        alert(`Error saving assessment: ${error.message}`);
+        alert(`${error.message}`);
       }
     },
     async updateAssessment() { // Changed to async
@@ -250,6 +265,7 @@ export default {
         const data = await response.json();
         if (data.message) {
           await this.fetchAssessmentsForCourse(this.form.course_id, token); // Re-fetch with token
+          await this.fetchTotalWeight(this.form.course_id, this.form.type); 
           alert('Successfully updated the assessment');
           this.toggleForm();
         } else {
@@ -296,6 +312,34 @@ export default {
         console.error('Error fetching assessments: ', error);
       }
     },
+    async fetchTotalWeight(courseId, type) {
+      if (!courseId || !type) {
+        this.totalWeightForSelectedCourse = 0;
+        return;
+      }
+      try {
+        const token = localStorage.getItem('authToken');
+        let url = `http://localhost:8085/api/assessments/total-weight/${courseId}?type=${type}`;
+        if (this.isEditMode && this.form.id) {
+          url += `&exclude_id=${this.form.id}`; // Pass current assessment ID to exclude
+        }
+
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        this.totalWeightForSelectedCourse = response.data.total_weight;
+        this.clearError(); // Clear any previous errors related to fetching
+      } catch (error) {
+        console.error('Error fetching total weight:', error);
+        this.totalWeightForSelectedCourse = 'N/A'; // Indicate error
+        this.errorMessage = 'Failed to fetch total weight for the selected course and type.'; // Display error
+      }
+    },
+    clearError() {
+      this.errorMessage = ''; // Clear the error message
+    },
     filteredAssessments(courseId) {
       return this.courseAssessments[courseId] || [];
     },
@@ -309,6 +353,7 @@ export default {
       };
       this.showForm = true;
       this.selectedAssessmentId = assessment.id;
+      this.fetchTotalWeight(this.form.course_id, this.form.type);
     },
     confirmDelete(assessmentId, event) {
       event.stopPropagation();
@@ -362,6 +407,7 @@ export default {
             // Remove the assessment from the list after successful deletion
             // Re-fetch assessments for the specific course to update the UI
             await this.fetchAssessmentsForCourse(this.selectedAssessment.course_id, token); // Re-fetch with token
+            await this.fetchTotalWeight(this.selectedAssessment.course_id); // Fetch updated total weight
             this.showConfirmation = false;
             this.selectedAssessment = null;
             alert('Assessment deleted successfully');
@@ -378,6 +424,19 @@ export default {
       return require(`@/assets/icons/${type}-icon.png`);
     },
   },
+  watch: {
+    // Watch for changes in course_id or type to re-fetch total weight
+    'form.course_id': function(newCourseId, oldCourseId) {
+      if (newCourseId !== oldCourseId) {
+        this.fetchTotalWeight(newCourseId, this.form.type);
+      }
+    },
+    'form.type': function(newType, oldType) {
+      if (newType !== oldType) {
+        this.fetchTotalWeight(this.form.course_id, newType);
+      }
+    }
+  }
 };
 </script>
 
@@ -632,4 +691,39 @@ export default {
   z-index: 9999;
   /* Make sure it's on top */
 }
+
+.error-message {
+  background-color: #ffebee;
+  /* Light red background */
+  color: #d32f2f;
+  /* Dark red text */
+  padding: 15px;
+  margin: 20px 0;
+  border: 1px solid #ef9a9a;
+  /* Red border */
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Style for the total weight display */
+.total-weight-display {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #e0f2f7; /* Light blue background */
+  border-left: 5px solid #2196f3; /* Blue left border */
+  border-radius: 5px;
+  font-size: 16px;
+  color: #333;
+}
+
+.total-weight-display p {
+  margin: 0;
+}
+
+.total-weight-display strong {
+  color: #0d47a1; /* Darker blue for emphasis */
+}
+
 </style>
