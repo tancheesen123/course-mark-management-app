@@ -14,14 +14,22 @@ import {
   PointElement,
   LinearScale,
   CategoryScale,
-} from 'chart.js';
-import { Line } from 'vue-chartjs';
+} from "chart.js";
+import { Line } from "vue-chartjs";
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, LinearScale, CategoryScale);
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale
+);
 
 export default {
-  name: 'LineChart',
-  props: ['chartData'],
+  name: "AveragePerComponentChart",
+  props: ["chartData"],
   components: {
     Line,
   },
@@ -31,14 +39,10 @@ export default {
         responsive: true,
         plugins: {
           legend: {
-            position: 'bottom',
+            position: "bottom",
           },
           title: {
-            display: true,
-            text: 'Class Average per Component',
-            font: {
-              size: 20,
-            },
+            display: false,
           },
         },
         scales: {

@@ -37,23 +37,50 @@
         <h2>Class Average per Component</h2>
         <LineChart :chartData="chartData" />
       </div>
+      <div class="comparison-container">
+        <h2>Compare with Coursemates</h2>
+        <p>
+          This student ranks <strong>{{ studentRank }}</strong> out of
+          <strong>{{ totalStudents }}</strong> in the course.
+        </p>
+      </div>
+
+      <div v-if="rankingChartData" class="ranking-chart">
+        <h2>Student Position in Class</h2>
+        <BarChart2
+          :data="rankingChartData"
+          :options="{
+            responsive: true,
+            plugins: { legend: { display: false } },
+          }"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import LineChart from "@/views/advisor/LineChart.vue";
+import LineChart from "@/views/advisor/AveragePerComponentChart.vue";
+
+import BarChart2 from "@/views/advisor/RankingChart.vue";
 
 export default {
   name: "StudentDetail",
-  components: { LineChart },
+  components: {
+    LineChart,
+    BarChart2,
+  },
+
   props: ["courseId", "studentId"],
 
   data() {
     return {
       averageMarks: [],
+      rankingMarks: [],
       student: null,
       errorMessage: "",
+      studentRank: null,
+      totalStudents: null,
       componentHeaders: [
         "Quiz",
         "Lab",
@@ -111,9 +138,48 @@ export default {
         ],
       };
     },
+
+    rankingChartData() {
+      if (!this.rankingMarks.length) return null;
+
+      return {
+        labels: this.rankingMarks.map((r) => r.label),
+        datasets: [
+          {
+            label: "Total Marks",
+            backgroundColor: this.rankingMarks.map((r) =>
+              r.isTarget ? "#7c192f" : "#ccc"
+            ),
+            data: this.rankingMarks.map((r) => r.value),
+          },
+        ],
+      };
+    },
   },
 
   methods: {
+    async fetchRanking() {
+      try {
+        const res = await fetch(
+          `http://localhost:8085/api/public/advisor/courses/${this.courseId}/ranking`
+        );
+        const data = await res.json();
+        if (res.ok && data.success && Array.isArray(data.ranks)) {
+          const sorted = data.ranks.sort((a, b) => b.total_mark - a.total_mark);
+          this.totalStudents = sorted.length;
+          const index = sorted.findIndex((s) => s.student_id == this.studentId);
+          if (index !== -1) this.studentRank = index + 1;
+
+          this.rankingMarks = sorted.map((s, i) => ({
+            label: `#${i + 1}`,
+            value: Math.round(s.total_mark * 100) / 100,
+            isTarget: s.student_id == this.studentId,
+          }));
+        }
+      } catch (err) {
+        console.error("Error loading ranking", err);
+      }
+    },
     async fetchAverageMarks() {
       try {
         const res = await fetch(
@@ -180,6 +246,7 @@ export default {
   mounted() {
     this.fetchStudentDetails();
     this.fetchAverageMarks();
+    this.fetchRanking();
   },
 };
 </script>
@@ -273,5 +340,29 @@ h2 {
 }
 .chart-container h2 {
   color: #7c192f;
+}
+
+.comparison-container {
+  margin-top: 60px;
+  background: #f5efe9;
+  padding: 20px 30px;
+  border-radius: 10px;
+  width: 85%;
+}
+
+.comparison-container h2 {
+  color: #7c192f;
+  margin-bottom: 10px;
+}
+
+.ranking-chart {
+  margin-top: 0px;
+  padding: 20px;
+  border-radius: 10px;
+  width: 85%;
+}
+.ranking-chart h2 {
+  color: #7c192f;
+  margin-bottom: 15px;
 }
 </style>

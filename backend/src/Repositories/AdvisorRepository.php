@@ -20,10 +20,9 @@ class AdvisorRepository {
         $pdo = getPDO();
         $stmt = $pdo->prepare("
             SELECT sa.mark, ac.weight, ac.type, ac.name
-FROM student_assessments sa
-JOIN assessment_component ac ON sa.assessment_id = ac.id
-WHERE sa.student_id = ? AND ac.course_id = ?
-
+            FROM student_assessments sa
+            JOIN assessment_component ac ON sa.assessment_id = ac.id
+            WHERE sa.student_id = ? AND ac.course_id = ?
         ");
 
         $stmt->execute([$studentId, $courseId]);

@@ -251,4 +251,29 @@ class AdvisorService {
     public function getAverageComponentStats($courseId): array {
         return $this->repo->getAverageComponentMarks($courseId);
     }
+
+    public function getStudentRankingList($courseId): array {
+        $pdo = getPDO();
+
+        $stmt = $pdo->prepare("
+            SELECT s.id AS student_id
+            FROM students s
+            JOIN enrollments e ON s.id = e.student_id
+            WHERE e.course_id = ?
+        ");
+        $stmt->execute([$courseId]);
+        $students = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $ranking = [];
+        foreach ($students as $s) {
+            $marks = $this->repo->getStudentMarks($s['student_id'], $courseId);
+            $total = $this->calculateTotalMark($marks);
+            $ranking[] = [
+                'student_id' => $s['student_id'],
+                'total_mark' => $total
+            ];
+        }
+
+        return $ranking;
+    }
 }

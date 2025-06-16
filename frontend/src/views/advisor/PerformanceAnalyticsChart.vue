@@ -24,7 +24,7 @@ ChartJS.register(
 );
 
 export default {
-  name: "BarChart",
+  name: "PerformanceAnalyticsChart",
   components: { Bar },
   props: ["data"],
   data() {

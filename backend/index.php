@@ -221,5 +221,23 @@ $app->get('/api/public/advisor/courses/{course_id}/average-marks', function ($re
     return $response->withHeader('Content-Type', 'application/json');
 });
 
+$app->get('/api/public/advisor/courses/{course_id}/ranking', function ($request, $response, $args) {
+    $courseId = $args['course_id'];
+    $service = new AdvisorService();
+
+    try {
+        $ranking = $service->getStudentRankingList($courseId);
+        $payload = json_encode(['success' => true, 'ranks' => $ranking]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+    } catch (\Exception $e) {
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Error fetching ranking',
+            'error' => $e->getMessage()
+        ]));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+});
 
 $app->run();

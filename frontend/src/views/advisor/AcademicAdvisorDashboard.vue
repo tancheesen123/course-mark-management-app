@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import BarChart from "@/views/advisor/BarChart.vue";
+import BarChart from "@/views/advisor/PerformanceAnalyticsChart.vue";
 
 export default {
   name: "AcademicAdvisorDashboard",
