@@ -40,7 +40,8 @@
       <div class="comparison-container">
         <h2>Compare with Coursemates</h2>
         <p>
-          This student ranks <strong>{{ studentRank }}</strong> out of
+          <strong>{{ student.name }} </strong> ranks
+          <strong>{{ studentRank }}</strong> out of
           <strong>{{ totalStudents }}</strong> in the course.
         </p>
       </div>

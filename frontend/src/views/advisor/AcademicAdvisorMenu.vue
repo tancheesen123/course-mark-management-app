@@ -16,9 +16,9 @@
           Advisees
         </router-link>
 
-        <router-link to="/advisorMenu/reports" exact-active-class="active-link"
+        <!-- <router-link to="/advisorMenu/reports" exact-active-class="active-link"
           >Reports</router-link
-        >
+        > -->
       </nav>
       <button class="logout-btn" @click="logoutUser">Log Out</button>
     </aside>

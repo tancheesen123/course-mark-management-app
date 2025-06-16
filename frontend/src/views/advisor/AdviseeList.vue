@@ -12,9 +12,10 @@
           v-model="searchQuery"
           placeholder="Search Advisees"
         />
-        <!-- <select v-model="selectedSemester">
+        <select v-model="selectedSemester">
+          <option value="">All Semesters</option>
           <option v-for="s in semesters" :key="s" :value="s">{{ s }}</option>
-        </select> -->
+        </select>
       </div>
       <div class="export-section">
         <button class="export-btn" @click="exportToExcel" :disabled="exporting">
@@ -66,22 +67,28 @@ export default {
       advisees: [],
       searchQuery: "",
       errorMessage: "",
-      // semesters: ["20242025/1", "20232024/2", "20222023/2"],
-      // selectedSemester: "20242025/1",
+      semesters: [],
+      selectedSemester: "",
       exporting: false,
       exportSuccess: false,
     };
   },
+
   computed: {
     filteredAdvisees() {
       return this.advisees.filter((a) => {
         const q = this.searchQuery.toLowerCase();
-        return (
+        const matchSearch =
           a.name?.toLowerCase().includes(q) ||
           a.matric_number?.toLowerCase().includes(q) ||
           a.gpa?.toString().includes(q) ||
-          a.risk?.toLowerCase().includes(q)
-        );
+          a.risk?.toLowerCase().includes(q);
+
+        const courseSem = `${a.year}${a.year + 1}/${a.semester}`;
+        const matchSemester =
+          !this.selectedSemester || this.selectedSemester === courseSem;
+
+        return matchSearch && matchSemester;
       });
     },
   },
@@ -116,6 +123,12 @@ export default {
 
         if (response.ok && data.success && Array.isArray(data.advisees)) {
           this.advisees = data.advisees;
+
+          // 生成 semester 选项
+          const uniqueSemesters = new Set(
+            data.advisees.map((a) => `${a.year}${a.year + 1}/${a.semester}`)
+          );
+          this.semesters = Array.from(uniqueSemesters).sort().reverse();
         } else {
           this.errorMessage = data.message || "Failed to load advisees.";
         }
@@ -375,5 +388,9 @@ th {
   color: green;
   font-weight: bold;
   font-size: 14px;
+}
+
+.search-filter select {
+  width: 200px;
 }
 </style>

@@ -7,9 +7,15 @@ class AdvisorRepository {
     public function getAdvisees($advisorUserId, $courseId) {
         $pdo = getPDO();
         $stmt = $pdo->prepare("
-            SELECT s.id AS student_id, s.name, s.matric_number
+            SELECT 
+                s.id AS student_id, 
+                s.name, 
+                s.matric_number,
+                c.year,
+                c.semester
             FROM students s
             INNER JOIN advisor_student a ON a.student_id = s.id
+            INNER JOIN course c ON a.course_id = c.course_id
             WHERE a.advisor_user_id = ? AND a.course_id = ?
         ");
         $stmt->execute([$advisorUserId, $courseId]);
