@@ -1,13 +1,12 @@
 <?php
 
 function getPDO() {
-    $host = '127.0.0.1'; // use IP instead of 'localhost'
-    $port = 3307;
+    $host = 'localhost';
     $db = 'course_mark_management';
     $user = 'root';
     $pass = '';
     $charset = 'utf8mb4';
-    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
     
     try{
         return new PDO($dsn, $user, $pass, [
