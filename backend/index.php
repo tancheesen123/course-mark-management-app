@@ -2,6 +2,9 @@
 require_once __DIR__ . '/db.php';
 require __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/src/router.php';
+require_once __DIR__ . '/src/Repositories/FeedbackAssessmentRepository.php';
+require_once __DIR__ . '/src/Services/FeedbackService.php';
+require_once __DIR__ . '/src/Controllers/FeedbackController.php';
 
 use DI\Container;
 use Dotenv\Dotenv;
@@ -23,6 +26,9 @@ use App\Repositories\CourseRepository;
 use App\Repositories\StudentRepository;
 use App\Repositories\AssessmentRepository;
 use App\Repositories\AdvisorRepository;
+use App\Repositories\FeedbackAssessmentRepository;
+use App\Services\FeedbackService;
+use App\Controllers\FeedbackController;
 
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/');
@@ -35,6 +41,7 @@ $container = new Container();
 $container->set(CourseRepository::class, fn() => new CourseRepository());
 $container->set(StudentRepository::class, fn() => new StudentRepository());
 $container->set(AssessmentRepository::class, fn() => new AssessmentRepository());
+$container->set(FeedbackAssessmentRepository::class, fn() => new FeedbackAssessmentRepository(getPDO()));
 
 // Services
 $container->set(CourseService::class, fn($c) => new CourseService($c->get(CourseRepository::class)));
@@ -46,7 +53,7 @@ $container->set(AssessmentService::class, fn($c) =>
         getPDO()
     )
 );
-
+$container->set(FeedbackService::class, fn($c) => new FeedbackService($c->get(FeedbackAssessmentRepository::class)));
 
 // Controllers
 $container->set(CourseController::class, fn($c) => new CourseController($c->get(CourseService::class)));
@@ -57,16 +64,17 @@ $container->set(StudentRecordController::class, fn($c) => new StudentRecordContr
     $c->get(AssessmentService::class),
     $c->get(CourseService::class)
 ));
+$container->set(FeedbackController::class, fn($c) => new FeedbackController($c->get(FeedbackService::class)));
 
 
 
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
+$app->add(new \App\Middleware\CorsMiddleware());
 
 $app->addRoutingMiddleware();
 $app->addBodyParsingMiddleware();
-$app->add(new CorsMiddleware());
 
 $app->options('/{routes:.+}', function ($request, $response) {
     return $response;
@@ -84,7 +92,12 @@ $app->get('/api/advisor/courses', function ($request, $response) {
         $response->getBody()->write(json_encode([
             "error" => "Missing advisor_user_id in query parameters."
         ]));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        return $response
+            ->withStatus(400)
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     }
 
     try {
@@ -99,7 +112,12 @@ $app->get('/api/advisor/courses', function ($request, $response) {
                 "courses" => [],
                 "message" => "No courses found for this advisor."
             ]));
-            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+            return $response
+                ->withStatus(200)
+                ->withHeader('Content-Type', 'application/json')
+                ->withHeader('Access-Control-Allow-Origin', '*')
+                ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+                ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
         }
 
         $placeholders = implode(',', array_fill(0, count($courseIds), '?'));
@@ -110,7 +128,12 @@ $app->get('/api/advisor/courses', function ($request, $response) {
         $response->getBody()->write(json_encode([
             "courses" => $courses
         ]));
-        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        return $response
+            ->withStatus(200)
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 
     } catch (PDOException $e) {
         $response->getBody()->write(json_encode([
@@ -129,7 +152,12 @@ $app->get('/api/public/advisor/courses/{course_id}/students', function ($request
 
     if (!$advisorId || !$courseId) {
         $response->getBody()->write(json_encode(['success' => false, 'message' => 'Missing advisor_user_id or course_id']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        return $response
+            ->withStatus(400)
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     }
 
     try {
@@ -160,7 +188,12 @@ $app->get('/api/public/advisor/courses/{course_id}/students/{student_id}/details
             'success' => false,
             'message' => 'Missing course_id or student_id'
         ]));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        return $response
+            ->withStatus(400)
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     }
 
     try {

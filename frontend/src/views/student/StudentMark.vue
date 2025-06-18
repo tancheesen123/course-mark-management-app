@@ -73,6 +73,12 @@
         <span class="col-calculated"><strong>{{ totalMarks }}/{{totalWeight}}</strong></span>
       </div>
     </div>
+
+    <div class="feedback-card">
+      <h3>Advisor Feedback</h3>
+      <p v-if="feedback">{{ feedback }}</p>
+      <p v-else class="no-feedback-msg">There is no feedback from advisor.</p>
+    </div>
   </div>
 </template>
 
@@ -94,10 +100,12 @@ export default {
       totalAssessmentMarks: 0,
       totalAssessmentWeight: 0,
       totalWeight: 0,
+      feedback: '',
     };
   },
   async mounted() {
     await this.fetchData();
+    this.fetchFeedback();
   },
 
   methods: {
@@ -152,6 +160,42 @@ export default {
     addStudentRecord() {
       // Your add record logic here
     },
+    async fetchFeedback() {
+      const student_id = localStorage.getItem("student_id");
+      const course_id = this.courseId; // or from route/query
+      const token = localStorage.getItem('authToken');
+      const res = await fetch(`http://localhost:8085/api/student/feedback?student_id=${student_id}&course_id=${course_id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      this.feedback = data.feedback || '';
+    },
+    async saveFeedback() {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        this.errorMessage = "User not authenticated";
+        return;
+      }
+      try {
+        const response = await fetch('http://localhost:8085/api/advisor/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ student_id: this.courseId, course_id: this.courseId, feedback: this.feedback })
+        });
+        if (response.ok) {
+          console.log("Feedback saved successfully");
+          this.errorMessage = "Feedback saved successfully";
+          this.fetchFeedback();
+        } else {
+          this.errorMessage = "Failed to save feedback";
+        }
+      } catch (error) {
+        console.error("Error saving feedback: ", error);
+        this.errorMessage = "Failed to save feedback due to network error.";
+      }
+    }
   },
 };
 </script>
@@ -207,5 +251,24 @@ export default {
 .col-calculated {
   flex: 1.5;
   min-width: 120px;
+}
+
+.feedback-card {
+  background: #f5efe9;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 32px;
+}
+.feedback-card h3 {
+  color: #770f20;
+  margin-bottom: 12px;
+}
+.success-msg {
+  color: green;
+  margin-top: 8px;
+}
+.no-feedback-msg {
+  color: #a0a0a0;
+  font-style: italic;
 }
 </style>

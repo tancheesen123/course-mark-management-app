@@ -60,42 +60,41 @@ class AdvisorService {
     }
 
     public function getStudentDetail($studentId, $courseId) {
-            $rows = $this->repo->getStudentDetail($studentId, $courseId);
+        $rows = $this->repo->getStudentDetail($studentId, $courseId);
 
-            if (!$rows) {
-                throw new \Exception("Student details not found");
-            }
-
-            $components = [];
-            foreach ($rows as $row) {
-                if ($row['component_name']) {
-                    $components[] = [
-                        'name' => $row['component_name'],
-                        'type' => $row['component_type'],
-                        'max_mark' => $row['component_max_mark'],
-                        'mark' => $row['student_mark'],
-                        'feedback' => $row['feedback'],
-                    ];
-                }
-            }
-
-            $totalMark = $this->calculateTotalMark($components);
-            $gpa = $this->calculateGPA($totalMark);
-            $risk = $this->determineRisk($gpa);
-
-            return [
-                'name' => $rows[0]['student_name'],
-                'matric_number' => $rows[0]['matric_number'],
-                'email' => $rows[0]['student_email'],
-                'course_name' => $rows[0]['course_name'],
-                'components' => $components,
-                'total_mark' => round($totalMark, 2),
-                'gpa' => round($gpa, 2),
-                'risk' => $risk,
-            ];
+        if (!$rows) {
+            throw new \Exception("Student details not found");
         }
 
-        public function getAdviseeStats($advisorUserId): array {
+        $components = [];
+        foreach ($rows as $row) {
+            if ($row['component_name']) {
+                $components[] = [
+                    'name' => $row['component_name'],
+                    'type' => $row['component_type'],
+                    'max_mark' => $row['component_max_mark'],
+                    'mark' => $row['student_mark']
+                ];
+            }
+        }
+
+        $totalMark = $this->calculateTotalMark($components);
+        $gpa = $this->calculateGPA($totalMark);
+        $risk = $this->determineRisk($gpa);
+
+        return [
+            'name' => $rows[0]['student_name'],
+            'matric_number' => $rows[0]['matric_number'],
+            'email' => $rows[0]['student_email'],
+            'course_name' => $rows[0]['course_name'],
+            'components' => $components,
+            'total_mark' => round($totalMark, 2),
+            'gpa' => round($gpa, 2),
+            'risk' => $risk,
+        ];
+    }
+
+    public function getAdviseeStats($advisorUserId): array {
         $studentsRaw = $this->repo->getAdviseesRaw($advisorUserId);
 
         $uniqueStudentIds = [];

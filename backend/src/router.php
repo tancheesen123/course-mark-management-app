@@ -7,8 +7,13 @@ use App\Middleware\JwtMiddleware;
 use App\Controllers\CourseController;
 use App\Controllers\AssessmentController;
 use App\Controllers\StudentRecordController;
+use App\Controllers\FeedbackController;
 use App\Middleware\CorsMiddleware;
 use App\Controllers\AdvisorController;
+
+require_once __DIR__ . '/Repositories/FeedbackAssessmentRepository.php';
+require_once __DIR__ . '/Services/FeedbackService.php';
+require_once __DIR__ . '/Controllers/FeedbackController.php';
 
 return function (App $app) {
     // Public route (no JWT required)    $app->add(new CorsMiddleware());
@@ -49,6 +54,9 @@ return function (App $app) {
         
         $group->get('/available-students', [StudentController::class, 'getAvailableStudents']);
 
+        // Feedback routes
+        $group->get('/student/feedback', [FeedbackController::class, 'getFeedback']);
+        $group->post('/advisor/feedback', [FeedbackController::class, 'setFeedback']);
     })->add(new JwtMiddleware());
 };
    
