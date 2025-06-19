@@ -56,6 +56,17 @@
           }"
         />
       </div>
+
+      <div class="feedback-card">
+        <h3>Advisor Feedback</h3>
+        <textarea v-model="feedback" rows="7" placeholder="Write feedback for this student..." class="feedback-textarea"></textarea>
+        <div class="feedback-btn-row">
+          <button class="save-feedback-btn" @click="saveFeedback">Save Feedback</button>
+        </div>
+        <transition name="fade">
+          <div v-if="saveSuccess" class="success-msg">Feedback saved successfully!</div>
+        </transition>
+      </div>
     </div>
   </div>
 </template>
@@ -91,6 +102,8 @@ export default {
         "Final",
         "Total",
       ],
+      feedback: '',
+      saveSuccess: false,
     };
   },
 
@@ -242,12 +255,52 @@ export default {
         this.$router.push("/advisorMenu/courses");
       }
     },
+
+    async fetchFeedback() {
+      const res = await fetch(`http://localhost:8085/api/student/feedback?student_id=${this.studentId}&course_id=${this.courseId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+      });
+      const data = await res.json();
+      this.feedback = data.feedback || '';
+    },
+
+    async saveFeedback() {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        this.errorMessage = "User not authenticated";
+        return;
+      }
+      try {
+        const response = await fetch('http://localhost:8085/api/advisor/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            student_id: this.studentId,
+            course_id: this.courseId,
+            feedback: this.feedback
+          })
+        });
+        if (response.ok) {
+          this.saveSuccess = true;
+          setTimeout(() => {
+            this.saveSuccess = false;
+          }, 3000);
+          await this.fetchFeedback();
+        } else {
+          this.errorMessage = "Failed to save feedback";
+        }
+      } catch (error) {
+        console.error("Error saving feedback: ", error);
+        this.errorMessage = "Failed to save feedback due to network error.";
+      }
+    }
   },
 
   mounted() {
     this.fetchStudentDetails();
     this.fetchAverageMarks();
     this.fetchRanking();
+    this.fetchFeedback();
   },
 };
 </script>
@@ -365,5 +418,76 @@ h2 {
 .ranking-chart h2 {
   color: #7c192f;
   margin-bottom: 15px;
+}
+
+.feedback-card {
+  background: #f5efe9;
+  border-radius: 12px;
+  padding: 32px 40px 32px 40px;
+  margin-top: 32px;
+  box-shadow: 0 2px 8px rgba(119, 15, 32, 0.06);
+  min-width: 350px;
+  max-width: 900px;
+}
+.feedback-card h3 {
+  color: #770f20;
+  margin-bottom: 18px;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+.feedback-textarea {
+  width: 100%;
+  min-width: 400px;
+  max-width: 100%;
+  min-height: 120px;
+  font-size: 1.08rem;
+  border-radius: 8px;
+  border: 1.5px solid #ccc;
+  padding: 12px;
+  font-family: inherit;
+  resize: vertical;
+  background: #fff;
+  transition: border 0.2s;
+}
+.feedback-textarea:focus {
+  border: 1.5px solid #770f20;
+  outline: none;
+}
+.feedback-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.save-feedback-btn {
+  background: #770f20;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 0;
+}
+.save-feedback-btn:hover {
+  background: #a32c43;
+}
+.success-msg {
+  color: #388e3c;
+  background: #eafbe7;
+  border-radius: 8px;
+  padding: 10px 18px;
+  margin-top: 18px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(56, 142, 60, 0.08);
+  display: inline-block;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.4s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 </style>

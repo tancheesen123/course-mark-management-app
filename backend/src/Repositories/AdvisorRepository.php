@@ -95,8 +95,7 @@ class AdvisorRepository {
                 ac.name AS component_name,
                 ac.weight AS component_max_mark,
                 ac.type AS component_type,
-                sa.mark AS student_mark,
-                sa.feedback
+                sa.mark AS student_mark
             FROM
                 students AS s
             JOIN
