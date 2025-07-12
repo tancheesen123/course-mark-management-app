@@ -45,7 +45,7 @@ class AssessmentService
     public function createAssessment(array $data): array
     {
         if (empty($data['course_id']) || empty($data['name']) || empty($data['type']) || empty($data['weight'])) {
-            throw new InvalidArgumentException('Missing required fields for assessment creation.');
+            throw new \InvalidArgumentException('Missing required fields for assessment creation.');
         }
 
         $courseId = (int)$data['course_id'];
@@ -57,7 +57,7 @@ class AssessmentService
             // Check for existing assessment with the same name for the course
             $existingAssessment = $this->assessmentRepository->getAssessmentByCourseIdAndName($courseId, $name);
             if ($existingAssessment) {
-                throw new InvalidArgumentException('An assessment with this name already exists for this course.', 409); // 409 Conflict
+                throw new \InvalidArgumentException('An assessment with this name already exists for this course.', 409); // 409 Conflict
             }
 
             // Validate weight before creating the assessment
@@ -87,7 +87,7 @@ class AssessmentService
     public function updateAssessment(int $id, array $data): bool
     {
         if (empty($data['name']) || empty($data['weight']) || empty($data['type'])) {
-            throw new InvalidArgumentException('Missing required fields for assessment update.');
+            throw new \InvalidArgumentException('Missing required fields for assessment update.');
         }
 
         $name = $data['name'];
@@ -98,14 +98,14 @@ class AssessmentService
             // Get current assessment details to use its course_id for weight validation
             $currentAssessment = $this->assessmentRepository->getAssessmentById($id);
             if (!$currentAssessment) {
-                throw new InvalidArgumentException("Assessment with ID {$id} not found.", 404);
+                throw new \InvalidArgumentException("Assessment with ID {$id} not found.", 404);
             }
             $courseId = (int)$currentAssessment['course_id'];
 
             // Check for existing assessment with the same name for the course, excluding the current one
             $existingAssessmentByName = $this->assessmentRepository->getAssessmentByCourseIdAndName($courseId, $name);
-            if ($existingAssessmentByName && $existingAssessmentByName['id'] !== $id) {
-                throw new InvalidArgumentException('An assessment with this name already exists for this course.', 409); // 409 Conflict
+            if ($existingAssessmentByName && $existingAssessmentByName['id'] != $id) {
+                throw new \InvalidArgumentException('An assessment with this name already exists for this course.', 409); // 409 Conflict
             }
 
             // Validate weight before updating the assessment
