@@ -36,8 +36,7 @@ class AssessmentRepository
                     s.name,
                     s.weight,
                     s.type,
-                    e.mark,
-                    e.feedback
+                    e.mark
                 FROM 
                     assessment_component s
                 JOIN 
